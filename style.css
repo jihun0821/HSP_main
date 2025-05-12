@@ -272,6 +272,18 @@ main {
   transition: background-color 0.2s, transform 0.2s;
 }
 
+.OtherService_2 {
+  background-color: #252525;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
 .more-button {
   padding: 6px 12px;
 }
@@ -894,6 +906,11 @@ body.light-mode .player {
   background-color: #e0e0e0;
 }
 
+body.light-mode .OtherService_2 {
+  color :#111;
+  background-color: #ffffff;
+}
+
 /* ============== 18. 반응형 디자인 ============== */
 @media (max-width: 1024px) {
   .search-bar {
@@ -977,10 +994,23 @@ body.light-mode .player {
 
 /* ============== 19. 폰트 디자인 ============== */
 .OtherService {font-weight: bold; font-style: italic;}
+
 .h_class {text-align: center;}
+
 .OtherService_1 {
   font-weight: bold; 
   text-align: center; 
   font-style: italic; 
   line-height: 60px;
+}
+
+.arrow {
+  display: inline-block; /* 줄바꿈 방지 */
+  vertical-align: middle; /* 글자 기준 정렬 */
+  width: 0;
+  height: 0;
+  margin-left: 6px; /* 간격 */
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid #aaa; /* 회색 화살표 */
 }
