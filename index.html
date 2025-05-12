@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hanil Sports Prediction</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="logo">&nbsp;&nbsp;&nbsp;⚽&nbsp;HSP</div>
+        <input type="text" class="search-bar" placeholder="경기 검색">
+        <button class="login" id="loginBtn">로그인</button>
+        <button class="logout" id="logoutBtn" style="display: none;">로그아웃</button>
+        <button class="add-match" id="addMatchBtn" style="display: none;">경기 추가</button>
+        
+        <div class="icons">
+            <span class="icon" id="toggleThemeBtn">🌙</span>
+        </div>            
+    </header>
+
+    <main>
+        <div class="left-sidebars">
+            <aside class="sidebar_1">
+                <h3 class-="h_class">구현 대회</h3>
+                <ul>
+                    <li class="OtherService">- 호실축구</li>
+                    <li class="OtherService">- 체육대회</li>
+                    <li class="OtherService">- 현제관의 날</li>
+                    <li class="OtherService">- 친선전</li>
+                </ul>
+            </aside>
+    
+            <!-- aside class="sidebar_2">
+                <h3 class="h_class">주요 스탯</h3>
+                <ul>
+                    <li class="OtherService">- 득점</li>
+                    <li class="OtherService">- 도움</li>
+                    <li></li>
+                    <div class="more-link_1">
+                        <a href="detailed.html" class="more-button_1">더보기</a>
+                    </div>
+                </ul>
+            </aside -->
+            <aside class="sidebar_3">
+                <h3 class="h_class">공지 사항</h3>
+                <ul>
+                    <li class="OtherService_1"><a href="onboard.html">- 사이트 안내사항</a></li>
+                </ul>
+            </aside>
+        </div>
+    
+        <section class="main">
+            <h2>&nbsp;&nbsp;&nbsp;끝난 경기</h2>
+            <div class="match-list">
+                <div class="match" data-match-id="1">
+                    <div class="match-info">
+                        <div class="match-date">2025-04-21</div>
+                        <div class="match-teams">
+                            <span class="team home">C103</span>
+                            <span class="score">2-1</span>
+                            <span class="team away">C104</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match" data-match-id="2">
+                    <div class="match-info">
+                        <div class="match-date">2025-04-20</div>
+                        <div class="match-teams">
+                            <span class="team home">1반</span>
+                            <span class="score">0-1</span>
+                            <span class="team away">3반</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="more-list">
+                <!--a href="ending.html" class="more-button_2">더보기</a-->
+            </div>
+            <hr>
+            <h2>&nbsp;&nbsp;&nbsp;진행중인 경기</h2>
+            <div class="match-list">
+                <div class="match" data-match-id="3">
+                    <div class="match-info">
+                        <div class="match-date">현재 진행중</div>
+                        <div class="match-teams">
+                            <span class="team home">C105</span>
+                            <span class="score">1-1</span>
+                            <span class="team away">C106</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <h2>&nbsp;&nbsp;&nbsp;예정된 경기</h2>
+            <div class="match-list">
+                <div class="match" data-match-id="4">
+                    <div class="match-info">
+                        <div class="match-date">2025-04-23</div>
+                        <div class="match-teams">
+                            <span class="team home">C207</span>
+                            <span class="score">vs</span>
+                            <span class="team away">C301</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="match" data-match-id="5">
+                    <div class="match-info">
+                        <div class="match-date">2025-04-25</div>
+                        <div class="match-teams">
+                            <span class="team home">C306</span>
+                            <span class="score">vs</span>
+                            <span class="team away">C105</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="more-list">
+                <!--a href="coming.html" class="more-button_3">더보기</a-->
+            </div>
+        </section>
+
+        <div class="right-sidebars">
+            <aside class="right-box">
+                <h3 class="h_class">기타 서비스</h3>
+                <ul>
+                    <li class="OtherService"><a href="https://www.hanilians.xyz/">- 한일리안</a></li>
+                    <li class="OtherService"><a href="https://docs.google.com/spreadsheets/d/1ZLiF4kczcSurKRB8vqgqzpRruJFjwsFzvpY6gUSMN_k/edit?gid=0#gid=0">- 운동장 예약</a></li>
+                    <li class="OtherService"><a href="https://docs.google.com/spreadsheets/d/1FMbES_cQjVVZ_Mv7RmuQYS4AJFlDvA5K7HfadLSnaZs/edit?gid=0#gid=0">- 호축 대진표</a></li>
+                    <li class="OtherService"><a href="https://cafe.naver.com/browns28nd">- 네이버 카페</a></li>
+                </ul>
+            </aside>
+
+            <!-- aside class="right-box">
+                <h3 class="h_class">리더보드</h3>
+                <ul>
+                    <li class="OtherService">1위: ----</li>
+                    <li class="OtherService">2위: ----</li>
+                    <li class="OtherService">3위: ----</li>
+                    <li class="OtherService">4위: ----</li>
+                </ul>
+                <div class="more-link">
+                    <a href="leaderboard.html" class="more-button">더보기</a>
+                </div>
+            </aside -->
+            
+            <aside class="right-box_1">
+                <h3>사이트 관련 문의는 20241116@hanilgo. cnehs.kr로</h3>
+                <h6>때때로 부정확한 정보가 제공될 수 있습니다.</h6>
+            </aside>
+        </div>
+    </main>
+
+    <!-- 경기 상세 정보 관련 -->
+    <div class="match-details-panel" id="matchDetailsPanel">
+        <div class="panel-header">
+            <button class="close-panel" id="closePanelBtn">×</button>
+            <h2 id="panelTitle">경기 상세 정보</h2>
+        </div>
+        <div class="panel-content" id="panelContent">
+            <!-- 경기 상세 정보 나타나는 곳 -->
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
