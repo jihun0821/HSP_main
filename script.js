@@ -170,9 +170,9 @@ function loadMatchDetails(matchId) {
                 <div class="team-logo">
                     ${
                         matchDetails.homeTeam === 'C103'
-                        ? '<img src="https://imgur.com/a/tMkQPg7" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://i.imgur.com/90cjhWB.jpeg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.homeTeam === 'C104'
-                        ? '<img src="https://imgur.com/a/DHvhrOD" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://i.imgur.com/YRsbG3n.jpeg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.homeTeam.charAt(0)}</span>`
                     }
                 </div>
@@ -187,9 +187,9 @@ function loadMatchDetails(matchId) {
                 <div class="team-logo">
                     ${
                         matchDetails.awayTeam === 'C103'
-                        ? '<img src="https://imgur.com/a/tMkQPg7" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://i.imgur.com/90cjhWB.jpeg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.awayTeam === 'C104'
-                        ? '<img src="https://imgur.com/a/DHvhrOD" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://i.imgur.com/YRsbG3n.jpeg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.awayTeam.charAt(0)}</span>`
                     }
                 </div>
