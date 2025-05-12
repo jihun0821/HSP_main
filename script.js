@@ -172,7 +172,7 @@ function loadMatchDetails(matchId) {
                         matchDetails.homeTeam === 'C103'
                         ? '<img src="https://github.com/jihun0821/test_1/issues/2#issue-3055582481" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.homeTeam === 'C104'
-                        ? '<img src="images/c104-logo.jpg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://github.com/jihun0821/test_1/issues/1#issue-3055581824" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.homeTeam.charAt(0)}</span>`
                     }
                 </div>
@@ -189,7 +189,7 @@ function loadMatchDetails(matchId) {
                         matchDetails.awayTeam === 'C103'
                         ? '<img src="https://github.com/jihun0821/test_1/issues/2#issue-3055582481" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.awayTeam === 'C104'
-                        ? '<img src="images/c104-logo.jpg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="https://github.com/jihun0821/test_1/issues/1#issue-3055581824" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.awayTeam.charAt(0)}</span>`
                     }
                 </div>
