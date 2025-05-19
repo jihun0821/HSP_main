@@ -1,22 +1,10 @@
-// const loginBtn = document.getElementById("loginBtn");
-// const logoutBtn = document.getElementById("logoutBtn");
-// const addMatchBtn = document.getElementById("addMatchBtn");
-
-// if (loginBtn && logoutBtn && addMatchBtn) {
-    // loginBtn.addEventListener("click", () => {
-        // loginBtn.style.display = "none";
-        // logoutBtn.style.display = "inline-block";
-        // addMatchBtn.style.display = "inline-block";
-    // });
-
-    // logoutBtn.addEventListener("click", () => {
-        // loginBtn.style.display = "inline-block";
-        // logoutBtn.style.display = "none";
-        // addMatchBtn.style.display = "none";
-    // });
-// }
 
 const toggleThemeBtn = document.getElementById("toggleThemeBtn");
+const matchDetailsPanel = document.getElementById("matchDetailsPanel");
+const overlay = document.getElementById("overlay");
+const closePanelBtn = document.getElementById("closePanelBtn");
+const panelContent = document.getElementById("panelContent");
+const panelTitle = document.getElementById("panelTitle");
 
 window.onload = function() {
     const savedTheme = localStorage.getItem("theme");
@@ -24,32 +12,26 @@ window.onload = function() {
 
     if (savedTheme === "light") {
         body.classList.add("light-mode");
-        toggleThemeBtn.textContent = "☀️"; 
+        toggleThemeBtn.textContent = "☀️";
     } else {
         body.classList.remove("light-mode");
-        toggleThemeBtn.textContent = "🌙"; 
+        toggleThemeBtn.textContent = "🌙";
     }
 
     setupMatchClickListeners();
-}
+};
 
 toggleThemeBtn?.addEventListener("click", () => {
     document.body.classList.toggle("light-mode");
 
     if (document.body.classList.contains("light-mode")) {
         localStorage.setItem("theme", "light");
-        toggleThemeBtn.textContent = "☀️"; 
+        toggleThemeBtn.textContent = "☀️";
     } else {
         localStorage.setItem("theme", "dark");
-        toggleThemeBtn.textContent = "🌙"; 
+        toggleThemeBtn.textContent = "🌙";
     }
 });
-
-const matchDetailsPanel = document.getElementById("matchDetailsPanel");
-const overlay = document.getElementById("overlay");
-const closePanelBtn = document.getElementById("closePanelBtn");
-const panelContent = document.getElementById("panelContent");
-const panelTitle = document.getElementById("panelTitle");
 
 function openPanel(matchId) {
     loadMatchDetails(matchId);
@@ -64,71 +46,28 @@ function closePanel() {
     document.body.style.overflow = "";
 }
 
-// 쿠키 관련 유틸리티 함수
-function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
-}
-
-function getCookie(name) {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-}
-
-// 투표 상태 로드 함수
-function getVotingStats(matchId) {
-    // 무력화된 함수 - 일관된 값을 반환
-    return {
-        homeWin: 0,
-        draw: 0,
-        awayWin: 0,
-        total: 0
-    };
-}
-
-// 투표 결과 저장 함수
-function saveVote(matchId, voteType) {
-    // 무력화된 함수 - 아무것도 하지 않고 기본값 반환
-    return {
-        homeWin: 0,
-        draw: 0,
-        awayWin: 0,
-        total: 0
-    };
-}
-
-// 투표 그래프 렌더링 함수
-function renderVotingGraph(container, stats) {
-    // 무력화된 함수 - 메시지만 표시
-    container.innerHTML = `
-        <div class="voting-stats-disabled">
-            <p>승부예측 기능이 현재 비활성화되었습니다.</p>
-        </div>
-    `;
-}
-
 function loadMatchDetails(matchId) {
     const matchDetails = getMatchDetailsById(matchId);
     panelTitle.textContent = `${matchDetails.homeTeam} vs ${matchDetails.awayTeam}`;
 
-    // 경기 상태에 따른 html 생성 (이미 끝난 경기, 진행 중인 경기, 예정된 경기)
     let predictionHtml = '';
-    const userVote = getCookie(`voted_${matchId}`);
-    const votingStats = getVotingStats(matchId);
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+    
+    function getVotingStats(matchId) {
+        return {
+            home: 0,
+            draw: 0,
+            away: 0,
+            total: 0
+        };
+    }
     
     if (matchDetails.status === "scheduled") {
-        // 예정된 경기: 투표 기능 비활성화 메시지
         predictionHtml = `
             <div class="prediction-container">
                 <h3>승부예측</h3>
@@ -138,7 +77,6 @@ function loadMatchDetails(matchId) {
             </div>
         `;
     } else if (matchDetails.status === "live") {
-        // 진행중인 경기: 투표 기능 비활성화 메시지
         predictionHtml = `
             <div class="prediction-container">
                 <h3>승부예측 결과</h3>
@@ -148,7 +86,6 @@ function loadMatchDetails(matchId) {
             </div>
         `;
     } else {
-        // 종료된 경기: 투표 기능 비활성화 메시지
         predictionHtml = `
             <div class="prediction-container">
                 <h3>승부예측 결과</h3>
@@ -170,9 +107,9 @@ function loadMatchDetails(matchId) {
                 <div class="team-logo">
                     ${
                         matchDetails.homeTeam === 'C103'
-                        ? '<img src="https://i.imgur.com/90cjhWB.jpeg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="images/c103-logo.jpg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.homeTeam === 'C104'
-                        ? '<img src="https://i.imgur.com/YRsbG3n.jpeg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="images/c104-logo.jpg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.homeTeam.charAt(0)}</span>`
                     }
                 </div>
@@ -187,9 +124,9 @@ function loadMatchDetails(matchId) {
                 <div class="team-logo">
                     ${
                         matchDetails.awayTeam === 'C103'
-                        ? '<img src="https://i.imgur.com/90cjhWB.jpeg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="images/c103-logo.jpg" alt="C103 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : matchDetails.awayTeam === 'C104'
-                        ? '<img src="https://i.imgur.com/YRsbG3n.jpeg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
+                        ? '<img src="images/c104-logo.jpg" alt="C104 팀 로고" style="width: 100%; height: 100%; object-fit: cover;">'
                         : `<span>${matchDetails.awayTeam.charAt(0)}</span>`
                     }
                 </div>
@@ -305,25 +242,18 @@ function loadMatchDetails(matchId) {
         </div>
     `;
 
-    // 투표 관련 이벤트 리스너는 모두 제거 (버튼이 없기 때문)
-
-    // Modified tab click handling
     const tabs = panelContent.querySelectorAll('.tab');
     const tabContents = panelContent.querySelectorAll('.tab-content');
     
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
-            // Remove active class from all tabs
             tabs.forEach(t => t.classList.remove('active'));
-            // Add active class to clicked tab
             this.classList.add('active');
             
-            // Hide all tab contents
             tabContents.forEach(content => {
                 content.style.display = 'none';
             });
             
-            // Show selected tab content
             const tabName = this.getAttribute('data-tab');
             const activeTabContent = document.getElementById(tabName + 'Tab');
             if (activeTabContent) {
@@ -333,211 +263,11 @@ function loadMatchDetails(matchId) {
     });
 }
 
-function getMatchDetailsById(matchId) {
-    const matchesData = {
-        "1": {
-            id: "1",
-            homeTeam: "알 수 없음",
-            awayTeam: "알 수 없음",
-            homeScore: 0,
-            awayScore: 0,
-            date: "날짜 정보 없음",
-            league: "리그 정보 없음",
-            status: "finished",
-            stats: {
-                homePossession: 55,
-                awayPossession: 45,
-                homeShots: 12,
-                awayShots: 8
-            },
-            events: [
-            ],
-            // Add lineup data
-            lineups: {
-                home: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                },
-                away: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                }
-            }
-        },
-        // Add lineup data to other matches
-        "2": {
-            id: "2",
-            homeTeam: "알 수 없음",
-            awayTeam: "알 수 없음",
-            homeScore: 0,
-            awayScore: 0,
-            date: "날짜 정보 없음",
-            league: "리그 정보 없음",
-            status: "finished",
-            stats: {
-                homePossession: 40,
-                awayPossession: 60,
-                homeShots: 5,
-                awayShots: 15
-            },
-            events: [
-            ],
-            lineups: {
-                home: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                },
-                away: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                }
-            }
-        },
-        "3": {
-            id: "3",
-            homeTeam: "알 수 없음",
-            awayTeam: "알 수 없음",
-            homeScore: 0,
-            awayScore: 0,
-            date: "날짜 정보 없음",
-            league: "리그 정보 없음",
-            status: "live",
-            stats: {
-                homePossession: 50,
-                awayPossession: 50,
-                homeShots: 7,
-                awayShots: 7
-            },
-            events: [
-            ],
-            lineups: {
-                home: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                },
-                away: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                }
-            }
-        },
-        "4": {
-            id: "4",
-            homeTeam: "알 수 없음",
-            awayTeam: "알 수 없음",
-            homeScore: 0,
-            awayScore: 0,
-            date: "날짜 정보 없음",
-            league: "리그 정보 없음",
-            status: "scheduled",
-            stats: {
-                homePossession: 50,
-                awayPossession: 50,
-                homeShots: 0,
-                awayShots: 0
-            },
-            events: [],
-            lineups: {
-                home: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                },
-                away: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                }
-            }
-        },
-        "5": {
-            id: "5",
-            homeTeam: "알 수 없음",
-            awayTeam: "알 수 없음",
-            homeScore: 0,
-            awayScore: 0,
-            date: "날짜 정보 없음",
-            league: "리그 정보 없음",
-            status: "scheduled",
-            stats: {
-                homePossession: 50,
-                awayPossession: 50,
-                homeShots: 0,
-                awayShots: 0
-            },
-            events: [],
-            lineups: {
-                home: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                },
-                away: {
-                    gk: [""],
-                    df: ["", "", "", ""],
-                    mf: ["", "", ""],
-                    at: ["", "", ""]
-                }
-            }
-        }
-    };
-
-    const defaultMatch = {
-        id: matchId,
-        homeTeam: "알 수 없음",
-        awayTeam: "알 수 없음",
-        homeScore: 0,
-        awayScore: 0,
-        date: "날짜 정보 없음",
-        league: "리그 정보 없음",
-        status: "unknown",
-        stats: {
-            homePossession: 50,
-            awayPossession: 50,
-            homeShots: 0,
-            awayShots: 0
-        },
-        events: [],
-        lineups: {
-            home: {
-                gk: [""],
-                df: ["", ""],
-                mf: ["", "", ""],
-                at: ["", ""]
-            },
-            away: {
-                gk: [""],
-                df: ["", ""],
-                mf: ["", "", ""],
-                at: ["", ""]
-            }
-        }
-    };
-
-    return matchesData[matchId] || defaultMatch;
-}
-
 function setupMatchClickListeners() {
     const matches = document.querySelectorAll('.match');
     matches.forEach(match => {
         match.addEventListener('click', () => {
-            const matchId = match.getAttribute('data-match-id');
-            openPanel(matchId);
+            openPanel(match.getAttribute('data-match-id'));
         });
     });
 
