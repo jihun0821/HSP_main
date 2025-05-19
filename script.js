@@ -337,12 +337,12 @@ function getMatchDetailsById(matchId) {
     const matchesData = {
         "1": {
             id: "1",
-            homeTeam: "C103",
-            awayTeam: "C104",
-            homeScore: 2,
-            awayScore: 1,
-            date: "2025-04-21",
-            league: "호실축구",
+            homeTeam: "알 수 없음",
+            awayTeam: "알 수 없음",
+            homeScore: 0,
+            awayScore: 0,
+            date: "날짜 정보 없음",
+            league: "리그 정보 없음",
             status: "finished",
             stats: {
                 homePossession: 55,
@@ -351,36 +351,32 @@ function getMatchDetailsById(matchId) {
                 awayShots: 8
             },
             events: [
-                { type: "goal", player: "조우준", detail: "C103 선제골" },
-                { type: "card", player: "홍현수", detail: "옐로카드" },
-                { type: "goal", player: "소하윤", detail: "C104 동점골" },
-                { type: "goal", player: "김주현", detail: "C103 추가골" }
             ],
             // Add lineup data
             lineups: {
                 home: {
-                    gk: ["1"],
-                    df: ["2", "3", "4", "5"],
-                    mf: ["6", "7", "8"],
-                    at: ["9", "10", "11"]
+                    gk: [""],
+                    df: ["", "", "", ""],
+                    mf: ["", "", ""],
+                    at: ["", "", ""]
                 },
                 away: {
-                    gk: ["12"],
-                    df: ["13", "14", "15", "16"],
-                    mf: ["17", "18", "19"],
-                    at: ["20", "21", "22"]
+                    gk: [""],
+                    df: ["", "", "", ""],
+                    mf: ["", "", ""],
+                    at: ["", "", ""]
                 }
             }
         },
         // Add lineup data to other matches
         "2": {
             id: "2",
-            homeTeam: "1반",
-            awayTeam: "3반",
+            homeTeam: "알 수 없음",
+            awayTeam: "알 수 없음",
             homeScore: 0,
-            awayScore: 1,
-            date: "2025-04-20",
-            league: "체육대회",
+            awayScore: 0,
+            date: "날짜 정보 없음",
+            league: "리그 정보 없음",
             status: "finished",
             stats: {
                 homePossession: 40,
@@ -389,14 +385,13 @@ function getMatchDetailsById(matchId) {
                 awayShots: 15
             },
             events: [
-                { type: "goal", player: "손준후", detail: "3반 선제골" }
             ],
             lineups: {
                 home: {
-                    gk: ["1"],
-                    df: ["2", "3", "4", "5"],
-                    mf: ["6", "7", "8"],
-                    at: ["9", "10", "11"]
+                    gk: [""],
+                    df: ["", "", "", ""],
+                    mf: ["", "", ""],
+                    at: ["", "", ""]
                 },
                 away: {
                     gk: [""],
@@ -408,12 +403,12 @@ function getMatchDetailsById(matchId) {
         },
         "3": {
             id: "3",
-            homeTeam: "C105",
-            awayTeam: "C106",
-            homeScore: 1,
-            awayScore: 1,
-            date: "현재 진행중",
-            league: "친선 경기",
+            homeTeam: "알 수 없음",
+            awayTeam: "알 수 없음",
+            homeScore: 0,
+            awayScore: 0,
+            date: "날짜 정보 없음",
+            league: "리그 정보 없음",
             status: "live",
             stats: {
                 homePossession: 50,
@@ -422,15 +417,13 @@ function getMatchDetailsById(matchId) {
                 awayShots: 7
             },
             events: [
-                { time: 15, type: "goal", player: "정현", detail: "C105 선제골" },
-                { time: 42, type: "goal", player: "박민성", detail: "C106 동점골" }
             ],
             lineups: {
                 home: {
-                    gk: ["1"],
-                    df: ["2", "3", "4", "5"],
-                    mf: ["6", "7", "8"],
-                    at: ["9", "10", "11"]
+                    gk: [""],
+                    df: ["", "", "", ""],
+                    mf: ["", "", ""],
+                    at: ["", "", ""]
                 },
                 away: {
                     gk: [""],
@@ -442,12 +435,12 @@ function getMatchDetailsById(matchId) {
         },
         "4": {
             id: "4",
-            homeTeam: "C207",
-            awayTeam: "C301",
+            homeTeam: "알 수 없음",
+            awayTeam: "알 수 없음",
             homeScore: 0,
             awayScore: 0,
-            date: "2025-04-23",
-            league: "현제관의 날",
+            date: "날짜 정보 없음",
+            league: "리그 정보 없음",
             status: "scheduled",
             stats: {
                 homePossession: 50,
@@ -473,12 +466,12 @@ function getMatchDetailsById(matchId) {
         },
         "5": {
             id: "5",
-            homeTeam: "C306",
-            awayTeam: "C105",
+            homeTeam: "알 수 없음",
+            awayTeam: "알 수 없음",
             homeScore: 0,
             awayScore: 0,
-            date: "2025-04-25",
-            league: "호실축구 리그",
+            date: "날짜 정보 없음",
+            league: "리그 정보 없음",
             status: "scheduled",
             stats: {
                 homePossession: 50,
