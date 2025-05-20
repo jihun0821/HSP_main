@@ -1,0 +1,306 @@
+/* ============== 9. 리더보드 스타일 ============== */
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.leaderboard-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+
+/* ============== 15. 투표 및 예측 관련 스타일 ============== */
+/* 투표 그래프 스타일 */
+.voting-stats {
+  margin: 15px 0;
+}
+
+.voting-stats .stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.voting-stats .stat-bar {
+  flex: 1;
+  height: 24px;
+  margin: 0 15px;
+  display: flex;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #222;
+}
+
+.voting-stats .home-stat {
+  background-color: #4CAF50;
+  height: 100%;
+}
+
+.voting-stats .draw-stat {
+  background-color: #c7c4c4;
+  height: 100%;
+}
+
+.voting-stats .away-stat {
+  background-color: #5C6BC0;
+  height: 100%;
+}
+
+.voting-stats .stat-value {
+  width: 40px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.stat-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
+.home-label {
+  color: #4CAF50;
+}
+
+.draw-label {
+  color: #9E9E9E;
+}
+
+.away-label {
+  color: #5C6BC0;
+}
+
+/* 투표 그래프 애니메이션 */
+.voting-stats .home-stat,
+.voting-stats .draw-stat,
+.voting-stats .away-stat {
+  transition: width 0.8s ease-in-out;
+}
+
+/* 예측 버튼 */
+.prediction-btns {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.prediction-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 120px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  color: #111;
+  min-width: 80px;
+  text-align: center;
+}
+
+.prediction-btn.home-win {
+  background-color: #4CAF50;
+}
+
+.prediction-btn.draw {
+  background-color: #B0B0B0;
+}
+
+.prediction-btn.away-win {
+  background-color: #5C6BC0;
+}
+
+.prediction-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 버튼 상태 스타일 */
+.prediction-btn.selected {
+  opacity: 0.7;
+  transform: scale(0.98);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* ============== 17. 라이트 모드 ============== */
+body.light-mode {
+  background-color: #f5f5f5;
+  color: #121212;
+}
+
+body.light-mode .navbar,
+body.light-mode .sidebar_1,
+body.light-mode .sidebar_2,
+body.light-mode .sidebar_3,
+body.light-mode .main,
+body.light-mode .right-box,
+body.light-mode .right-box_1,
+body.light-mode .match-details-panel {
+  background-color: #ffffff;
+  color: #121212;
+}
+
+body.light-mode .logo {
+  color: #121212;
+}
+
+body.light-mode .search-bar {
+  background-color: #f0f0f0;
+  color: black;
+  border: 1px solid #ccc;
+}
+
+body.light-mode .main hr {
+  border-color: #ddd;
+}
+
+body.light-mode .match {
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .match:hover {
+  background-color: #e8e8e8;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .match-date {
+  color: #666;
+}
+
+body.light-mode .score {
+  color: #007bff;
+}
+
+body.light-mode .more-button,
+body.light-mode .more-button_1,
+body.light-mode .more-button_2,
+body.light-mode .more-button_3 {
+  background-color: #eeebeb;
+  color: #121212;
+}
+
+body.light-mode .more-button:hover,
+body.light-mode .more-button_1:hover,
+body.light-mode .more-button_2:hover,
+body.light-mode .more-button_3:hover {
+  background-color: #d0d0d0;
+  text-decoration: underline; 
+  color: #007bff;
+}
+
+body.light-mode .right-box a:hover,
+body.light-mode .right-box_1 a:hover {
+  color: #007bff;
+  text-decoration: underline; 
+}
+
+body.light-mode .leaderboard-list li {
+  border-bottom: 1px solid #ddd;
+}
+
+body.light-mode .panel-header {
+  border-bottom: 1px solid #ddd;
+}
+
+body.light-mode .close-panel {
+  color: #666;
+}
+
+body.light-mode .close-panel:hover {
+  color: #121212;
+}
+
+body.light-mode .match-date, 
+body.light-mode .match-league,
+body.light-mode .stat-label,
+body.light-mode .event-time,
+body.light-mode .event-detail {
+  color: #666;
+}
+
+body.light-mode .score-display {
+  color: #007bff;
+}
+
+body.light-mode .home-stat {
+  background-color: #007bff;
+}
+
+body.light-mode .away-stat {
+  background-color: #ff5722;
+}
+
+body.light-mode .stat-bar {
+  background-color: #e0e0e0;
+}
+
+body.light-mode .tabs {
+  border-bottom: 1px solid #ddd;
+}
+
+body.light-mode .tab.active {
+  border-bottom-color: #007bff;
+  color: #007bff;
+}
+
+body.light-mode .event {
+  border-bottom: 1px solid #ddd;
+}
+
+body.light-mode .team-logo {
+  background-color: #e0e0e0;
+}
+
+body.light-mode .sidebar_3 a:hover {
+  color: #007bff
+}
+
+/* 라이트 모드 - 투표 및 예측 관련 */
+body.light-mode .voting-stats .stat-bar {
+  background-color: #e0e0e0;
+}
+
+body.light-mode .stat-labels {
+  color: #666;
+}
+
+body.light-mode .prediction-btn {
+  color: white;
+}
+
+body.light-mode .prediction-btn.home-win {
+  background-color: #66bb6a;
+}
+
+body.light-mode .prediction-btn.draw {
+  background-color: #bdbdbd;
+}
+
+body.light-mode .prediction-btn.away-win {
+  background-color: #7986cb;
+}
+
+/* 라이트 모드 - 라인업 관련 */
+body.light-mode .lineup-team {
+  background-color: #f2f2f2;
+}
+
+body.light-mode .position-label {
+  color: #666;
+}
+
+body.light-mode .player {
+  background-color: #e0e0e0;
+}
+
+body.light-mode .OtherService_2 {
+  color :#111;
+  background-color: #ffffff;
+}
