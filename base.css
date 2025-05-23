@@ -360,7 +360,11 @@ body.no-left-sidebar main {
 }
 
 /* ============== 19. 폰트 디자인 ============== */
-.OtherService {font-weight: bold; font-style: italic;}
+.OtherService {
+  font-weight: bold;
+  font-style: italic;
+  font-size: 14px;
+}
 
 .h_class {text-align: center;}
 
