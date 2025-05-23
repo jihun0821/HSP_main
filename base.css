@@ -80,6 +80,11 @@ main, main_onboard {
   padding: 30px;
   gap: 20px;
   margin-right: 1px;
+  /* 오른쪽 사이드바 고정에 따른 마진은 아래에서 추가 */
+}
+
+main {
+  margin-right: 240px; /* 사이드바가 fixed일 때 메인 컨텐츠 안 가리도록 마진 추가 */
 }
 
 /* ============== 4. 왼쪽 사이드바 ============== */
@@ -148,11 +153,15 @@ main, main_onboard {
 
 /* ============== 7. 오른쪽 사이드바 ============== */
 .right-sidebars {
+  position: fixed;
+  top: 90px; /* 헤더 높이에 따라 조절, 필요시 수정 */
+  right: 30px;
+  width: 200px;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 200px;
-  margin-left: 20px;
+  margin-left: 0;
   flex-shrink: 0;
 }
 
@@ -263,6 +272,7 @@ main, main_onboard {
   
   main {
     flex-direction: column;
+    margin-right: 0;
   }
   
   .left-sidebars {
@@ -277,20 +287,19 @@ main, main_onboard {
   }
   
   .right-sidebars {
+    position: static !important;
     width: 100%;
     margin-left: 0;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
+    top: auto;
+    right: auto;
+    z-index: auto;
   }
   
   .right-box {
     width: calc(33.33% - 15px);
-  }
-  
-  /* 라인업 반응형 */
-  .lineups-teams {
-    flex-direction: column;
   }
 }
 
@@ -323,6 +332,10 @@ main, main_onboard {
   
   .right-box {
     width: 100%;
+  }
+  
+  main {
+    margin-right: 0;
   }
   
   .match-score {
