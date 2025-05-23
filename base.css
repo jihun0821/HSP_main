@@ -84,11 +84,22 @@ main, main_onboard {
 }
 
 main {
-  margin-right: 240px; /* 사이드바가 fixed일 때 메인 컨텐츠 안 가리도록 마진 추가 */
+  margin-left: 220px;   /* 왼쪽 사이드바 폭 + 여유 */
+  margin-right: 240px;  /* 오른쪽 사이드바 폭 + 여유 */
+}
+
+/* 파일 맨 아래쪽이나 기존 main 스타일 아래에 추가 */
+body.no-left-sidebar main {
+  margin-left: 0 !important;
 }
 
 /* ============== 4. 왼쪽 사이드바 ============== */
 .left-sidebars {
+  position: fixed;
+  top: 90px;             /* 헤더 높이만큼 아래 */
+  left: 30px;
+  width: 160px;          /* 기존 너비(150px) + 여유 */
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 20px;
