@@ -134,7 +134,10 @@ body.light-mode {
   color: #121212;
 }
 
-body.light-mode .navbar,
+body.light-mode .navbar {
+  background: linear-gradient(to right, rgba(61, 13, 191, 1), rgba(229, 78, 52, 1));
+  color: #121212;
+}
 body.light-mode .sidebar_1,
 body.light-mode .sidebar_2,
 body.light-mode .sidebar_3,
