@@ -206,31 +206,44 @@ async function loadChartData() {
     }
 }
 
-// 차트 렌더링
 function renderChart(category, stats) {
     const chartContainer = document.getElementById(`${category}-chart`);
     if (!chartContainer) return;
-    
-    // 데이터 정렬 (득표수 기준 내림차순)
+
+    // 득표수 내림차순, 동률시 이름 오름차순
     const sortedData = Object.entries(stats)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 10); // 상위 10개만 표시
-    
-    const maxVotes = Math.max(...Object.values(stats), 1);
-    
+        .sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            if (!isNaN(a[0]) && !isNaN(b[0])) return Number(a[0]) - Number(b[0]);
+            return a[0].localeCompare(b[0], 'ko');
+        });
+
+    // 전체 투표수 계산
+    const totalVotes = Object.values(stats).reduce((sum, v) => sum + v, 0) || 1;
+
     chartContainer.innerHTML = '';
-    
+
     if (sortedData.length === 0) {
         chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 예측이 없습니다.</p>';
         return;
     }
-    
+
+    // 상위 3개만 기본 표시, 4위 이후는 숨김
+    const visibleCount = 3;
+    const hasOverflow = sortedData.length > visibleCount;
+    const chartList = document.createElement('div');
+    chartList.className = 'chart-list';
+
     sortedData.forEach(([option, votes], index) => {
-        const percentage = (votes / maxVotes) * 100;
-        
+        // 전체 투표수 대비 퍼센트
+        const percentage = (votes / totalVotes) * 100;
         const chartItem = document.createElement('div');
         chartItem.className = 'chart-item';
-        
+        if (index >= visibleCount) {
+            chartItem.classList.add('chart-overflow');
+            chartItem.style.display = 'none';
+        }
+
         chartItem.innerHTML = `
             <div class="chart-label">
                 <span>${option}</span>
@@ -243,9 +256,25 @@ function renderChart(category, stats) {
                 ${index < 3 ? `<div class="rank-badge ${index === 1 ? 'second' : index === 2 ? 'third' : ''}">${index + 1}위</div>` : ''}
             </div>
         `;
-        
-        chartContainer.appendChild(chartItem);
+        chartList.appendChild(chartItem);
     });
+
+    chartContainer.appendChild(chartList);
+
+    if (hasOverflow) {
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'chart-more-btn';
+        moreBtn.textContent = '더보기';
+        moreBtn.onclick = function () {
+            const overflowItems = chartList.querySelectorAll('.chart-overflow');
+            const anyHidden = Array.from(overflowItems).some(item => item.style.display === 'none');
+            overflowItems.forEach(item => {
+                item.style.display = anyHidden ? 'block' : 'none';
+            });
+            moreBtn.textContent = anyHidden ? '접기' : '더보기';
+        };
+        chartContainer.appendChild(moreBtn);
+    }
 }
 
 // 모달 외부 클릭시 닫기
