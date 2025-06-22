@@ -372,3 +372,37 @@ body.light-mode .prediction-input:focus {
   border-color: #2051ff;
   background-color: #f8f9ff;
 }
+
+/* ...생략: 기존 코드 유지 */
+
+/* 차트 더보기 버튼 스타일 */
+.chart-more-btn {
+    margin: 10px auto 0 auto;
+    display: block;
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.chart-more-btn:hover {
+    background: #ccc;
+}
+
+/* 라이트모드 */
+body.light-mode .chart-more-btn {
+    background: #f3f3f3;
+    color: #2051ff;
+}
+body.light-mode .chart-more-btn:hover {
+    background: #e6edff;
+}
+
+/* 차트 아이템 리스트 래퍼(overflow 원활) */
+.chart-list {
+    width: 100%;
+}
