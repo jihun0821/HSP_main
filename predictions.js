@@ -1,0 +1,405 @@
+// predictions.js
+let currentUser = null;
+let currentCategory = null;
+let selectedOption = null;
+
+// Firebase 초기화 대기
+window.addEventListener('DOMContentLoaded', () => {
+    // 인증 상태 변경 감지
+    if (window.firebase && window.firebase.onAuthStateChanged) {
+        const auth = window.firebase.getAuth();
+        window.firebase.onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                loadUserPredictions();
+                loadChartData();
+            }
+        });
+    }
+});
+
+const predictionOptions = {
+    scorer: [
+        '이승민', '김태현', '박준호', '최민수', '정우진',
+        '한동원', '김민성', '이재혁', '박성훈', '조영수'
+    ],
+    champion: [
+        // 우승팀 예측용 실질적 선택지 (select에서만 사용)
+        'C101','C102','C103','C104','C105','C106',
+        'C201','C202','C203','C204','C205','C206','C207',
+        'C301','C302','C303','C304','C305','C306','C307'
+    ],
+    assist: [
+        '김현우', '박지훈', '이동현', '최준영', '정민호',
+        '한승우', '김동민', '이성민', '박태준', '조민수'
+    ]
+};
+
+const categoryTitles = {
+    scorer: '🥅 득점왕 예측',
+    champion: '🏆 우승팀 예측',
+    assist: '🅰️ 도움왕 예측'
+};
+
+// 예측 모달 열기
+function openPredictionModal(category) {
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    
+    currentCategory = category;
+    selectedOption = null;
+    
+    const modal = document.getElementById('predictionModal');
+    const title = document.getElementById('modal-title');
+    const inputContainer = document.getElementById('prediction-input-container');
+    const inputBox = document.getElementById('prediction-input');
+    const submitBtn = document.getElementById('submit-prediction');
+
+    title.textContent = categoryTitles[category];
+    
+    // 기존 input/select 초기화
+    inputContainer.innerHTML = '';
+    inputContainer.style.display = 'block';
+    submitBtn.disabled = true;
+    modal.style.display = 'block';
+
+    if (category === 'champion') {
+        // Select로 변경
+        const select = document.createElement('select');
+        select.id = 'prediction-select';
+        select.className = 'prediction-select';
+        select.innerHTML = `<option value="">우승팀을 선택하세요</option>` +
+            predictionOptions.champion.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+        inputContainer.appendChild(select);
+
+        select.onchange = function() {
+            if (select.value) {
+                selectedOption = select.value;
+                submitBtn.disabled = false;
+            } else {
+                selectedOption = null;
+                submitBtn.disabled = true;
+            }
+        };
+    } else {
+        // 기본 input 사용
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'prediction-input';
+        input.className = 'prediction-input';
+        input.placeholder = "예측을 입력하세요";
+        inputContainer.appendChild(input);
+        input.oninput = function() {
+            if (input.value.trim().length > 0) {
+                selectedOption = input.value.trim();
+                submitBtn.disabled = false;
+            } else {
+                selectedOption = null;
+                submitBtn.disabled = true;
+            }
+        };
+    }
+}
+
+async function submitPrediction() {
+    if (!currentUser || !currentCategory || !selectedOption) {
+        return;
+    }
+    
+    try {
+        const db = window.firebase.getFirestore();
+        const userEmail = currentUser.email;
+        const timestamp = new Date().toISOString();
+
+        // 기존 선택 불러오기
+        const userPredictionsRef = window.firebase.doc(db, 'predictions', userEmail);
+        const userDoc = await window.firebase.getDoc(userPredictionsRef);
+        let previousChoice = null;
+        if (userDoc.exists() && userDoc.data()[currentCategory]) {
+            previousChoice = userDoc.data()[currentCategory].choice;
+        }
+
+        // 만약 기존 선택과 같으면 아무 것도 하지 않음
+        if (previousChoice === selectedOption) {
+            alert('이미 동일한 예측을 하셨습니다!');
+            closePredictionModal();
+            return;
+        }
+
+        // 통계 업데이트
+        const statsRef = window.firebase.doc(db, 'prediction_stats', currentCategory);
+        const statsDoc = await window.firebase.getDoc(statsRef);
+
+        let currentStats = {};
+        if (statsDoc.exists()) {
+            currentStats = statsDoc.data();
+        }
+
+        // 기존 선택이 있었다면 감소
+        if (previousChoice && currentStats[previousChoice]) {
+            currentStats[previousChoice] = Math.max(0, (currentStats[previousChoice] || 0) - 1);
+        }
+        // 새 선택 증가
+        currentStats[selectedOption] = (currentStats[selectedOption] || 0) + 1;
+
+        // 1. 유저별 예측값 덮어쓰기
+        await window.firebase.setDoc(
+            userPredictionsRef,
+            {
+                [currentCategory]: {
+                    choice: selectedOption,
+                    timestamp: timestamp
+                }
+            },
+            { merge: true }
+        );
+        // 2. 통계 업데이트
+        await window.firebase.setDoc(statsRef, currentStats);
+
+        // UI 업데이트
+        updateUserPredictionDisplay(currentCategory, selectedOption);
+        updateCategoryButton(currentCategory);
+        loadChartData();
+        
+        closePredictionModal();
+        
+    } catch (error) {
+        console.error('예측 저장 실패:', error);
+        alert('예측 저장에 실패했습니다. 다시 시도해주세요.');
+    }
+}
+
+// 사용자 예측 표시 업데이트
+function updateUserPredictionDisplay(category, choice) {
+    const predictionDiv = document.getElementById(`${category}-prediction`);
+    predictionDiv.textContent = `내 예측: ${choice}`;
+    predictionDiv.style.display = 'block';
+}
+
+// 카테고리 버튼 업데이트
+function updateCategoryButton(category) {
+    const button = document.querySelector(`[onclick="openPredictionModal('${category}')"]`);
+    if (button) {
+        button.textContent = '예측 변경';
+        button.style.background = '#28a745';
+    }
+}
+
+// 사용자 예측 로드
+async function loadUserPredictions() {
+    if (!currentUser) return;
+    
+    try {
+        const db = window.firebase.getFirestore();
+        const userDoc = await window.firebase.getDoc(
+            window.firebase.doc(db, 'predictions', currentUser.email)
+        );
+        
+        if (userDoc.exists()) {
+            const predictions = userDoc.data();
+            
+            Object.keys(predictions).forEach(category => {
+                if (predictions[category] && predictions[category].choice) {
+                    updateUserPredictionDisplay(category, predictions[category].choice);
+                    updateCategoryButton(category);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('사용자 예측 로드 실패:', error);
+    }
+}
+
+// 차트 데이터 로드 및 표시
+async function loadChartData() {
+    try {
+        const db = window.firebase.getFirestore();
+        
+        for (const category of Object.keys(predictionOptions)) {
+            const statsDoc = await window.firebase.getDoc(
+                window.firebase.doc(db, 'prediction_stats', category)
+            );
+            
+            let stats = {};
+            if (statsDoc.exists()) {
+                stats = statsDoc.data();
+            }
+            
+            renderChart(category, stats);
+        }
+    } catch (error) {
+        console.error('차트 데이터 로드 실패:', error);
+    }
+}
+
+function renderChart(category, stats) {
+    const chartContainer = document.getElementById(`${category}-chart`);
+    if (!chartContainer) return;
+
+    // 득표수 내림차순, 동률시 이름 오름차순
+    const sortedData = Object.entries(stats)
+        .sort((a, b) => {
+            if (b[1] !== a[1]) return b[1] - a[1];
+            if (!isNaN(a[0]) && !isNaN(b[0])) return Number(a[0]) - Number(b[0]);
+            return a[0].localeCompare(b[0], 'ko');
+        });
+
+    // 전체 투표수 계산
+    const totalVotes = Object.values(stats).reduce((sum, v) => sum + v, 0) || 1;
+
+    chartContainer.innerHTML = '';
+
+    if (sortedData.length === 0) {
+        chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 예측이 없습니다.</p>';
+        return;
+    }
+
+    // 상위 3개만 기본 표시, 4위 이후는 숨김
+    const visibleCount = 3;
+    const hasOverflow = sortedData.length > visibleCount;
+    const chartList = document.createElement('div');
+    chartList.className = 'chart-list';
+
+    sortedData.forEach(([option, votes], index) => {
+        // 전체 투표수 대비 퍼센트
+        const percentage = (votes / totalVotes) * 100;
+        const chartItem = document.createElement('div');
+        chartItem.className = 'chart-item';
+        if (index >= visibleCount) {
+            chartItem.classList.add('chart-overflow');
+            chartItem.style.display = 'none';
+        }
+
+        chartItem.innerHTML = `
+            <div class="chart-label">
+                <span>${option}</span>
+                <span>${votes}표</span>
+            </div>
+            <div class="chart-bar">
+                <div class="chart-fill" style="width: ${percentage}%">
+                    ${percentage.toFixed(1)}%
+                </div>
+                ${index < 3 ? `<div class="rank-badge ${index === 1 ? 'second' : index === 2 ? 'third' : ''}">${index + 1}위</div>` : ''}
+            </div>
+        `;
+        chartList.appendChild(chartItem);
+    });
+
+    chartContainer.appendChild(chartList);
+
+    if (hasOverflow) {
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'chart-more-btn';
+        moreBtn.textContent = '더보기';
+        moreBtn.onclick = function () {
+            const overflowItems = chartList.querySelectorAll('.chart-overflow');
+            const anyHidden = Array.from(overflowItems).some(item => item.style.display === 'none');
+            overflowItems.forEach(item => {
+                item.style.display = anyHidden ? 'block' : 'none';
+            });
+            moreBtn.textContent = anyHidden ? '접기' : '더보기';
+        };
+        chartContainer.appendChild(moreBtn);
+    }
+}
+
+// 모달 외부 클릭시 닫기
+window.onclick = function(event) {
+    const modal = document.getElementById('predictionModal');
+    if (event.target === modal) {
+        closePredictionModal();
+    }
+}
+
+function closePredictionModal() {
+    const modal = document.getElementById('predictionModal');
+    if (modal) {
+        modal.style.display = 'none';
+        const inputContainer = document.getElementById('prediction-input-container');
+        if (inputContainer) inputContainer.innerHTML = '';
+        const submitBtn = document.getElementById('submit-prediction');
+        if (submitBtn) submitBtn.disabled = true;
+    }
+}
+window.closePredictionModal = closePredictionModal;
+
+// 리더보드용 페이지 변수 (predictions.js에서만 사용)
+const leaderboardUsersPerPage = 15;
+let leaderboardCurrentPage = 1;
+let allUsers = []; // [{uid, nickname, points, totalVotes, correctVotes, successRate}]
+
+async function loadLeaderboard() {
+    const db = firebase.getFirestore();
+    // 전체 사용자 uid, 닉네임
+    const usersSnapshot = await firebase.getDocs(firebase.collection(db, "profiles"));
+    const userList = [];
+    usersSnapshot.forEach(doc => {
+        userList.push({ uid: doc.id, nickname: doc.data().nickname || doc.id });
+    });
+
+    // 포인트
+    const pointSnapshot = await firebase.getDocs(firebase.collection(db, "user_points"));
+    const pointsDict = {};
+    pointSnapshot.forEach(doc => {
+        pointsDict[doc.id] = doc.data().points || 0;
+    });
+
+    // 전체 votes
+    const votesSnapshot = await firebase.getDocs(firebase.collection(db, "votes"));
+    // finished 경기 결과
+    const matchesSnapshot = await firebase.getDocs(firebase.collection(db, "matches"));
+    const finishedMatches = {};
+    matchesSnapshot.forEach(doc => {
+        if (doc.data().status === "finished" && doc.data().adminResult) {
+            finishedMatches[doc.id] = doc.data().adminResult;
+        }
+    });
+
+    // uid별 집계
+    const userStats = {};
+    votesSnapshot.forEach(doc => {
+        const { uid, matchId, voteType } = doc.data();
+        if (!userStats[uid]) userStats[uid] = { total: 0, correct: 0 };
+        userStats[uid].total++;
+        // 맞춘 경기 체크
+        if (finishedMatches[matchId] && finishedMatches[matchId] === voteType) {
+            userStats[uid].correct++;
+        }
+    });
+
+    // 합쳐서 allUsers 만듦
+    allUsers = userList.map(user => {
+        const stat = userStats[user.uid] || { total: 0, correct: 0 };
+        const points = pointsDict[user.uid] || 0;
+        return {
+            ...user,
+            points,
+            totalVotes: stat.total,
+            correctVotes: stat.correct,
+            successRate: stat.total ? Math.round((stat.correct / stat.total) * 100) : 0
+        };
+    });
+
+    // 포인트순 내림차순
+    allUsers.sort((a, b) => b.points - a.points);
+
+    renderLeaderboardTable();
+}
+
+function renderLeaderboardTable() {
+    const tableBody = document.getElementById('leaderboardBody');
+    const start = (leaderboardCurrentPage - 1) * leaderboardUsersPerPage;
+    const pageUsers = allUsers.slice(start, start + leaderboardUsersPerPage);
+    tableBody.innerHTML = pageUsers.map((user, idx) => `
+        <tr>
+            <td>${start + idx + 1}</td>
+            <td>${user.nickname}</td>
+            <td>${user.totalVotes}</td>
+            <td>${user.successRate}%</td>
+            <td>${user.points}</td>
+        </tr>
+    `).join('');
+    // 페이지네이션 버튼 활성/비활성 등 추가 구현
+}
