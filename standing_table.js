@@ -3,14 +3,14 @@ const teams = [
   { teamName: "C203", group: "1", played: 0, points: 0 },
   { teamName: "C204", group: "1", played: 0, points: 0 },
   { teamName: "C304", group: "1", played: 0, points: 0 },
-  { teamName: "C305", group: "1", played: 0, points: 0 },
-  { teamName: "C307", group: "1", played: 0, points: 0 },
+  { teamName: "C305", group: "1", played: 1, points: 0 },
+  { teamName: "C307", group: "1", played: 1, points: 3 },
 
-  { teamName: "C102", group: "2", played: 0, points: 0 },
+  { teamName: "C102", group: "2", played: 1, points: 3 },
   { teamName: "C103", group: "2", played: 0, points: 0 },
   { teamName: "C104", group: "2", played: 0, points: 0 },
   { teamName: "C205", group: "2", played: 0, points: 0 },
-  { teamName: "C302", group: "2", played: 0, points: 0 },
+  { teamName: "C302", group: "2", played: 1, points: 0 },
 
   { teamName: "C101", group: "3", played: 0, points: 0 },
   { teamName: "C105", group: "3", played: 0, points: 0 },
