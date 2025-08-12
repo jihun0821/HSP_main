@@ -1037,7 +1037,7 @@ async function renderPanelTabs(matchDetails, matchId) {
     return `
         <div class="tab-container">
             <div class="tabs">
-                <div class="tab active" data-tab="lineup">라인업</div>
+                <div class="tab active" data-tab="lineup">호실 명단</div>
                 <div class="tab" data-tab="chat">채팅</div>
             </div>
             <div class="tab-contents">
