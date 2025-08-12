@@ -5,7 +5,7 @@ const closePanelBtn = document.getElementById("closePanelBtn");
 const panelContent = document.getElementById("panelContent");
 const panelTitle = document.getElementById("panelTitle");
 
-let currentPage = 6;
+let currentPage = 7;
 const matchesPerPage = 5;
 
 // 관리자 권한 관련 전역 변수
@@ -772,6 +772,74 @@ async function getMatchDetailsById(matchId) {
     }
 }
 
+// ✅ teams 컬렉션에서 팀 라인업 가져오기
+async function getTeamLineup(teamName) {
+    try {
+        // teamName을 문서 ID로 사용하여 teams 컬렉션에서 조회
+        const teamDocRef = window.firebase.doc(db, "teams", teamName);
+        const teamDoc = await window.firebase.getDoc(teamDocRef);
+        
+        if (teamDoc.exists()) {
+            const teamData = teamDoc.data();
+            console.log(`${teamName} 팀 라인업 조회 성공:`, teamData.lineups);
+            return teamData.lineups || { first: [], second: [], third: [] };
+        } else {
+            console.warn(`teams 컬렉션에서 ${teamName} 팀을 찾을 수 없습니다.`);
+            return { first: [], second: [], third: [] };
+        }
+    } catch (error) {
+        console.error(`${teamName} 팀 라인업 조회 실패:`, error);
+        return { first: [], second: [], third: [] };
+    }
+}
+
+// ✅ 경기 라인업 데이터 가져오기 (teams 컬렉션 우선)
+async function getMatchLineups(matchDetails) {
+    try {
+        const homeTeamName = matchDetails.homeTeam;
+        const awayTeamName = matchDetails.awayTeam;
+        
+        console.log(`라인업 조회 시작 - 홈팀: ${homeTeamName}, 원정팀: ${awayTeamName}`);
+        
+        // teams 컬렉션에서 각 팀의 라인업 조회
+        const homeLineup = await getTeamLineup(homeTeamName);
+        const awayLineup = await getTeamLineup(awayTeamName);
+        
+        // teams 컬렉션에 라인업이 없으면 matches 컬렉션의 lineups 필드 사용 (폴백)
+        const finalLineups = {
+            home: homeLineup,
+            away: awayLineup
+        };
+        
+        // teams 컬렉션에서 라인업을 찾지 못한 경우 matches 컬렉션에서 폴백
+        if (!homeLineup.first.length && !homeLineup.second.length && !homeLineup.third.length) {
+            console.log(`${homeTeamName} 팀의 teams 컬렉션 라인업이 비어있음, matches 컬렉션에서 폴백`);
+            if (matchDetails.lineups && matchDetails.lineups.home) {
+                finalLineups.home = matchDetails.lineups.home;
+            }
+        }
+        
+        if (!awayLineup.first.length && !awayLineup.second.length && !awayLineup.third.length) {
+            console.log(`${awayTeamName} 팀의 teams 컬렉션 라인업이 비어있음, matches 컬렉션에서 폴백`);
+            if (matchDetails.lineups && matchDetails.lineups.away) {
+                finalLineups.away = matchDetails.lineups.away;
+            }
+        }
+        
+        console.log("최종 라인업 데이터:", finalLineups);
+        return finalLineups;
+        
+    } catch (error) {
+        console.error("라인업 조회 중 오류 발생:", error);
+        
+        // 오류 발생 시 matches 컬렉션의 lineups 필드 사용 (폴백)
+        return matchDetails.lineups || {
+            home: { first: [], second: [], third: [] },
+            away: { first: [], second: [], third: [] }
+        };
+    }
+}
+
 // loadMatchDetails 함수 (관리자 버튼 포함)
 async function loadMatchDetails(matchId) {
     const matchDetails = await getMatchDetailsById(matchId);
@@ -838,7 +906,7 @@ async function loadMatchDetails(matchId) {
             <div class="team-name">${matchDetails.awayTeam}</div>
         </div>
         <div class="prediction-container">${predictionHtml}</div>
-        ${renderPanelTabs(matchDetails, matchId)}
+        ${await renderPanelTabs(matchDetails, matchId)}
     `;
 
     const statsContainer = panelContent.querySelector('#votingStats');
@@ -961,7 +1029,11 @@ function escapeHtml(text) {
     }[s]));
 }
 
-function renderPanelTabs(matchDetails, matchId) {
+// ✅ renderPanelTabs 함수 수정 - 비동기 처리
+async function renderPanelTabs(matchDetails, matchId) {
+    // teams 컬렉션에서 라인업 가져오기
+    const lineups = await getMatchLineups(matchDetails);
+    
     return `
         <div class="tab-container">
             <div class="tabs">
@@ -970,7 +1042,7 @@ function renderPanelTabs(matchDetails, matchId) {
             </div>
             <div class="tab-contents">
                 <div class="tab-content lineup-content active">
-                    ${renderLineup(matchDetails)}
+                    ${renderLineup(lineups)}
                 </div>
                 <div class="tab-content chat-content">
                     ${renderChatBox(matchId)}
@@ -980,9 +1052,8 @@ function renderPanelTabs(matchDetails, matchId) {
     `;
 }
 
-// 라인업 렌더링 (학년별)
-function renderLineup(match) {
-    const groupLabel = (idx) => ["1학년", "2학년", "3학년"][idx];
+// ✅ 라인업 렌더링 함수 수정 - lineups 객체를 직접 받도록 변경
+function renderLineup(lineups) {
     function players(list) {
         return `<div class="players-container">${list.map((n) => `<div class="player">${escapeHtml(n)}</div>`).join("")}</div>`;
     }
@@ -999,9 +1070,9 @@ function renderLineup(match) {
         <div class="lineup-field">
             <div class="lineup-bg"></div>
             <div class="lineup-sides">
-                ${sideBlock("home", match.lineups.home)}
+                ${sideBlock("home", lineups.home)}
                 <div class="vs-label">VS</div>
-                ${sideBlock("away", match.lineups.away)}
+                ${sideBlock("away", lineups.away)}
             </div>
         </div>
     `;
