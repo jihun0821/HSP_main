@@ -9,7 +9,7 @@ class AdminController {
 
     init() {
         this.checkAdminStatus();
-        this.setupEventListeners(); // ← 이거 이제 정상 작동!
+        this.setupEventListeners();
     }
 
     checkAdminStatus() {
@@ -49,9 +49,6 @@ class AdminController {
     }
 }
 
-
-// --------- add-match-modal.js 코드 통합 -------------
-
 // Firebase 초기화 확인
 function initializeMatchAddModal() {
     if (window.firebase && window.firebase.getFirestore && window.firebase.getAuth) {
@@ -71,7 +68,7 @@ function setupModalEvents() {
     const cancelBtn = document.getElementById('cancelAddMatch');
     const addMatchForm = document.getElementById('addMatchForm');
 
-    // 모달 닫기 이벤트들
+    // 모달 닫기 이벤트
     closeModalBtn.onclick = () => addMatchModal.style.display = 'none';
     cancelBtn.onclick = () => addMatchModal.style.display = 'none';
     
@@ -171,7 +168,7 @@ async function handleFormSubmit(e) {
             home: getLineupData('home'),
             away: getLineupData('away')
         },
-        events: [] // 기본 빈 배열로 초기화
+        events: [] 
     };
 
     // 유효성 검사
@@ -256,6 +253,6 @@ if (document.readyState === 'loading') {
     initializeMatchAddModal();
 }
 
-// 전역 함수로 노출 (기존 코드에서 호출할 수 있도록)
+// 전역 함수로 노출
 window.openAddMatchModal = openAddMatchModal;
 window.addPlayer = addPlayer;
