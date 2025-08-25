@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -12,43 +11,57 @@
     <link rel="stylesheet" href="stats.css">
     <link rel="icon" href="https://i.imgur.com/Lu3D6Qb.png"/>
     
-    <!-- Firebase SDK CDN -->
+<!-- Firebase SDK CDN -->
 <script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword,
-    sendEmailVerification,
-    signOut, 
-    onAuthStateChanged, 
-    updateProfile 
+  import {
+    initializeApp
+  } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged, updateProfile, sendEmailVerification,
+    sendPasswordResetEmail 
   } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-  import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    getDoc,
-    onSnapshot 
+
+  import {
+    getFirestore,
+    doc, setDoc, getDoc, onSnapshot,
+    collection, query, where, getDocs
   } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+  // Firebase Storage 추가
+  import {
+    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
   window.firebase = {
     initializeApp,
     getAuth,
-    sendEmailVerification,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
+    sendEmailVerification,
+    sendPasswordResetEmail,
     updateProfile,
     getFirestore,
     doc,
     setDoc,
     getDoc,
-    onSnapshot 
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
   };
 </script>
 </head>
+
 <body>
 <header class="navbar">
   <a href="index.html" class="logo">
@@ -225,56 +238,140 @@
       </section>
     </main>
 
-    <!-- 로그인/회원가입 모달 -->
-    <div id="authModal" class="auth-modal">
-        <div class="auth-modal-content">
-            <span class="auth-modal-close" id="closeAuthModal">&times;</span>
-            <h2>로그인 / 회원가입</h2>
-            <div class="auth-form">
-                <input id="email" type="email" placeholder="이메일 (@hanilgo.cnehs.kr)" autocomplete="username" name="email" />
-                <input id="password" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" name="password" />
-                <div class="auth-buttons">
-                    <button id="doLogin" class="auth-btn login-btn">로그인</button>
-                    <button id="doSignUp" class="auth-btn signup-btn">회원가입</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <footer class="custom-footer">
       <a class="footer-link" href="footer.html">개인정보 처리방침</a>
     </footer>
-    
-    <!-- 프로필 설정 모달 -->
-    <div id="profileModal" class="profile-modal">
-        <div class="profile-modal-content">
-            <span class="profile-modal-close" id="closeProfileModal">&times;</span>
-            <h2>프로필 설정</h2>
-            
-            <!-- 프로필 이미지 미리보기 영역 -->
-            <div class="profile-preview"></div>
-            
-            <!-- 닉네임 입력 -->
-            <input id="nickname" type="text" placeholder="닉네임 (2-20자)" maxlength="20" />
-            
-            <!-- 파일 업로드 -->
-            <div class="file-upload-wrapper">
-                <label for="avatar" class="file-upload-label">
-                    프로필 사진 선택 (선택사항)
-                </label>
-                <input id="avatar" type="file" accept="image/*" style="display: none;" />
-            </div>
+
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="auth-modal" style="display: none;">
+       <div class="auth-modal-content">
+         <span class="auth-modal-close" id="closeLoginModal">&times;</span>
+         <h2 style="margin-bottom: 24px;">로그인</h2>
+         <div class="auth-form">
+           <input id="loginEmail" type="email" placeholder="아이디(이메일)" autocomplete="username" name="email" />
+           <input id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password" name="password" />
+           <button id="doLogin" class="auth-btn login-btn" style="width: 100%; margin: 12px 0;">로그인</button>
+         </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+          <a href="#" id="openSignupLink" style="color: #2051ff; font-size: 15px; text-decoration: underline;">가입하기</a>
+          <a href="#" id="openPasswordResetLink" style="color: #2051ff; font-size: 15px;">비밀번호를 잊어버리셨나요?</a>
+        </div>
+       </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="signupModal" class="auth-modal" style="display: none;">
+       <div class="auth-modal-content">
+         <span class="auth-modal-close" id="closeSignupModal">&times;</span>
+         <h2 style="margin-bottom: 24px;">회원가입</h2>
+         <div class="auth-form">
+           <input id="signupEmail" type="email" placeholder="이메일 (@hanilgo.cnehs.kr)" name="email" />
+           <input id="signupPassword" type="password" placeholder="비밀번호 (6자 이상)" name="password" />
+           <button id="openProfileModalBtn" class="auth-btn signup-btn" style="width: 100%; margin: 12px 0;">다음</button>
+         </div>
+         <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+           <a href="#" id="backToLoginLink" style="color: #2051ff; font-size: 15px; text-decoration: underline;">로그인으로 돌아가기</a>
+         </div>
+       </div>
+    </div>
+
+<div id="profileModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-content">
+        <span class="auth-modal-close" id="closeProfileModal">&times;</span>
+        <h2 style="margin-bottom: 24px;">프로필 설정</h2>
+        <div class="auth-form">
+            <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                닉네임을 설정해주세요. (2-20자)
+            </p>
+            <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
             
             <!-- 버튼들 -->
-            <div class="modal-buttons">
-                <button id="saveProfileBtn" class="save-profile-btn">저장하고 가입</button>
-                <button class="cancel-btn" onclick="document.getElementById('profileModal').style.display='none'">취소</button>
+            <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <!-- ✅ ID 변경: saveProfileBtn → signupSaveProfileBtn -->
+                <button id="signupSaveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
+                <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- 비밀번호 재설정 모달 -->
+    <div id="passwordResetModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-content">
+        <span class="auth-modal-close" id="closePasswordResetModal">&times;</span>
+        <h2 style="margin-bottom: 24px;">비밀번호 재설정</h2>
+        <div class="auth-form" id="passwordResetForm">
+          <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+            가입할 때 사용한 이메일 주소를 입력하면 비밀번호 재설정 링크를 보내드립니다.
+          </p>
+          <input id="resetEmail" type="email" placeholder="이메일 주소 입력" name="resetEmail" />
+          <button id="sendResetEmailBtn" class="auth-btn" style="width: 100%; margin: 12px 0;">
+            비밀번호 재설정 이메일 보내기
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+          <a href="#" id="backToLoginFromReset" style="color: #2051ff; font-size: 15px; text-decoration: underline;">로그인으로 돌아가기</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프로필 편집 모달 -->
+    <div id="profileEditModal" class="profile-edit-modal" style="display: none;">
+        <div class="profile-edit-modal-content">
+            <span class="profile-edit-modal-close" id="closeProfileEditModal">&times;</span>
+            <h2>프로필 편집</h2>
+            
+            <!-- 현재 프로필 정보 표시 -->
+            <div class="current-profile-info">
+                <div class="profile-image-container">
+                    <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                    <div class="image-overlay">
+                        <button id="changeImageBtn" class="change-image-btn">사진 변경</button>
+                    </div>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="current-nickname" id="currentNickname"></div>
+                <div class="current-email" id="currentEmail"></div>
+            </div>
+            
+            <!-- 편집 폼 -->
+            <div class="edit-form">
+                <label for="newNickname">새 닉네임</label>
+                <input 
+                    id="newNickname" 
+                    type="text" 
+                    placeholder="새 닉네임 입력 (2-20자)" 
+                    maxlength="20"
+                />
+                
+                <!-- 이미지 미리보기 -->
+                <div id="imagePreviewContainer" style="display: none;">
+                    <label>새 프로필 사진 미리보기:</label>
+                    <img id="imagePreview" src="" alt="미리보기" class="image-preview">
+                    <button id="cancelImageBtn" class="cancel-image-btn">이미지 취소</button>
+                </div>
+                
+                <div class="edit-buttons">
+                    <button id="saveProfileBtn" class="edit-btn save-btn">저장</button>
+                    <button id="cancelEditBtn" class="edit-btn cancel-btn">취소</button>
+                </div>
+                
+                <!-- 업로드 진행 표시 -->
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">업로드 중...</span>
+                </div>
+                
+                <div id="editSuccessMessage" class="success-message" style="display: none;">
+                    프로필이 성공적으로 변경되었습니다!
+                </div>
             </div>
         </div>
     </div>
 
     <!-- 스크립트는 Firebase SDK 로드 후에 실행 -->
     <script type="module" src="auth.js"></script>    
-    <script src="matchData.js"></script>
     <script src="script.js"></script>
   </body>
