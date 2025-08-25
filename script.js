@@ -5,7 +5,7 @@ const closePanelBtn = document.getElementById("closePanelBtn");
 const panelContent = document.getElementById("panelContent");
 const panelTitle = document.getElementById("panelTitle");
 
-let currentPage = 7;
+let currentPage = 6;
 const matchesPerPage = 5;
 
 // 관리자 권한 관련 전역 변수
@@ -19,7 +19,59 @@ async function getTotalPages() {
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
+// ✅ Firebase 변수들을 전역으로 선언하고 초기화
 let db, auth;
+
+// ✅ Firebase 초기화를 전역 window 객체에 노출 (predictions.js와 공유)
+function initializeFirebaseGlobals() {
+    if (window.firebase && window.firebase.getFirestore && window.firebase.getAuth) {
+        db = window.firebase.getFirestore();
+        auth = window.firebase.getAuth();
+        
+        // 전역 변수로 노출하여 predictions.js에서 사용 가능하도록 함
+        window.db = db;
+        window.auth = auth;
+        window.firebase = window.firebase; // firebase 객체도 명시적으로 노출
+        
+        console.log("script.js - Firebase 초기화 완료");
+        return true;
+    }
+    return false;
+}
+
+// ✅ 현재 페이지가 리더보드인지 확인하는 함수 수정 - 더 정확하게 감지
+function isLeaderboardPage() {
+    const url = window.location.pathname;
+    const hasLeaderboardClass = document.querySelector('.leaderboard-section') !== null;
+    const hasLeaderboardTitle = document.title && document.title.includes('리더보드');
+    
+    return url.includes('leaderboard.html') || hasLeaderboardClass || hasLeaderboardTitle;
+}
+
+// ✅ 현재 페이지에서 경기 목록을 렌더링해야 하는지 확인하는 함수 수정
+function shouldRenderMatches() {
+    const url = window.location.pathname;
+    const hasPagination = document.querySelector('.pagination-container') !== null;
+    const hasMainSection = document.querySelector('section.main') !== null;
+    
+    // schedule.html이거나 index.html이거나 메인 페이지이면서, 리더보드가 아닌 경우
+    const isMatchPage = (
+        url.includes('schedule.html') || 
+        url.includes('index.html') || 
+        url === '/' || 
+        url === ''
+    ) && !isLeaderboardPage();
+    
+    console.log("shouldRenderMatches 체크:", {
+        url: url,
+        hasPagination: hasPagination,
+        hasMainSection: hasMainSection,
+        isMatchPage: isMatchPage,
+        isLeaderboard: isLeaderboardPage()
+    });
+    
+    return isMatchPage && hasPagination && hasMainSection;
+}
 
 window.onload = function () {
     const savedTheme = localStorage.getItem("theme");
@@ -31,25 +83,31 @@ window.onload = function () {
         body.classList.remove("light-mode");
     }
 
-    // ✅ Firebase SDK 로드 후에 초기화
-    if (window.firebase && window.firebase.getFirestore && window.firebase.getAuth) {
-        db = window.firebase.getFirestore();
-        auth = window.firebase.getAuth();
-        
-        // ✅ 관리자 권한 확인 추가
-        checkAdminStatus();
-    } else {
-        console.error("Firebase SDK가 아직 로드되지 않았습니다.");
-        return;
-    }
-
-    const pagination = document.querySelector('.pagination-container');
-    if (pagination) {
-        renderMatches();
-        updateButtons();
-    } else {
-        setupMatchClickListeners();
-    }
+    // ✅ Firebase 초기화를 재시도 방식으로 변경
+    const waitForFirebaseInit = () => {
+        if (initializeFirebaseGlobals()) {
+            // Firebase 초기화 성공 시 관리자 권한 확인
+            checkAdminStatus();
+            
+            // ✅ 페이지별로 다른 초기화 실행 - 수정된 로직
+            if (shouldRenderMatches()) {
+                console.log("경기 목록 페이지 - 경기 렌더링 실행");
+                renderMatches();
+                updateButtons();
+            } else if (isLeaderboardPage()) {
+                console.log("리더보드 페이지 - 경기 렌더링 건너뜀");
+                // 리더보드는 predictions.js에서 처리하므로 경기 렌더링 안함
+            } else {
+                console.log("기타 페이지 - 경기 클릭 이벤트만 설정");
+                setupMatchClickListeners();
+            }
+        } else {
+            console.log("script.js - Firebase SDK 대기 중...");
+            setTimeout(waitForFirebaseInit, 100);
+        }
+    };
+    
+    waitForFirebaseInit();
     
     // 페이지 로드 시 공지 표시 여부 확인
     checkNoticeVisibility();
@@ -66,15 +124,11 @@ window.onload = function () {
 
 // 관리자 권한 확인 함수 (수정된 버전)
 async function checkAdminStatus() {
-    // Firebase가 초기화되지 않았으면 대기
-    if (!window.firebase || !window.firebase.getFirestore || !window.firebase.getAuth) {
-        console.error("Firebase SDK가 아직 로드되지 않았습니다.");
+    // Firebase가 초기화되지 않았으면 에러 반환
+    if (!auth || !db) {
+        console.error("Firebase 변수들이 초기화되지 않았습니다.");
         return;
     }
-
-    // 전역 변수 초기화
-    if (!auth) auth = window.firebase.getAuth();
-    if (!db) db = window.firebase.getFirestore();
     
     window.firebase.onAuthStateChanged(auth, async (user) => {
         if (user) {
@@ -544,32 +598,39 @@ function isUserLoggedIn() {
     return !!localStorage.getItem("userEmail");
 }
 
-// === 프로필 편집 모달 열기 함수 ===
-function openProfileEditModal(profileData) {
-    const modal = document.getElementById('profileEditModal');
-    if (!modal) return;
-    document.getElementById('currentProfileImage').src = profileData.avatar_url;
-    document.getElementById('currentNickname').textContent = profileData.nickname;
-    document.getElementById('currentEmail').textContent = profileData.email || "";
-    document.getElementById('editSuccessMessage').style.display = "none";
-    document.getElementById('newNickname').value = "";
-    modal.style.display = "flex";
-}
-
-// 프로필 편집 모달 이벤트 설정
+// 프로필 편집 모달 이벤트 설정 (디버깅 강화 버전)
 function setupProfileEditModalEvents() {
+    console.log("=== 프로필 편집 모달 이벤트 설정 시작 ===");
+    
     const closeProfileEditModal = document.getElementById('closeProfileEditModal');
     const cancelEditBtn = document.getElementById('cancelEditBtn');
     const profileEditModal = document.getElementById('profileEditModal');
+    const changeImageBtn = document.getElementById('changeImageBtn');
+    const imageFileInput = document.getElementById('imageFileInput');
+    const cancelImageBtn = document.getElementById('cancelImageBtn');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    
+    // 각 요소 존재 확인 및 로그
+    console.log("프로필 편집 모달 요소들 확인:", {
+        closeProfileEditModal: !!closeProfileEditModal,
+        cancelEditBtn: !!cancelEditBtn,
+        profileEditModal: !!profileEditModal,
+        changeImageBtn: !!changeImageBtn,
+        imageFileInput: !!imageFileInput,
+        cancelImageBtn: !!cancelImageBtn,
+        saveProfileBtn: !!saveProfileBtn
+    });
     
     if (closeProfileEditModal) {
         closeProfileEditModal.onclick = () => {
+            console.log("닫기 버튼 클릭됨");
             if (profileEditModal) profileEditModal.style.display = 'none';
         };
     }
     
     if (cancelEditBtn) {
         cancelEditBtn.onclick = () => {
+            console.log("취소 버튼 클릭됨");
             if (profileEditModal) profileEditModal.style.display = 'none';
         };
     }
@@ -577,17 +638,371 @@ function setupProfileEditModalEvents() {
     if (profileEditModal) {
         profileEditModal.onclick = (e) => {
             if (e.target === profileEditModal) {
+                console.log("모달 배경 클릭됨");
                 profileEditModal.style.display = 'none';
             }
         };
     }
+    
+    // 이미지 변경 버튼 클릭
+    if (changeImageBtn) {
+        changeImageBtn.onclick = () => {
+            console.log("이미지 변경 버튼 클릭됨");
+            if (imageFileInput) {
+                imageFileInput.click();
+            }
+        };
+    }
+    
+    // 파일 선택 시 미리보기 표시
+    if (imageFileInput) {
+        imageFileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            console.log("파일 선택됨:", file ? file.name : 'none');
+            
+            if (file) {
+                // 파일 크기 체크 (5MB 제한)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('파일 크기가 너무 큽니다. 5MB 이하의 이미지를 선택해주세요.');
+                    return;
+                }
+                
+                // 파일 타입 체크
+                if (!file.type.startsWith('image/')) {
+                    alert('이미지 파일만 업로드할 수 있습니다.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imagePreview = document.getElementById('imagePreview');
+                    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+                    
+                    if (imagePreview && imagePreviewContainer) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.style.display = 'block';
+                        console.log("이미지 미리보기 표시됨");
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+    
+    // 이미지 취소 버튼
+    if (cancelImageBtn) {
+        cancelImageBtn.onclick = () => {
+            console.log("이미지 취소 버튼 클릭됨");
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            if (imagePreviewContainer) {
+                imagePreviewContainer.style.display = 'none';
+            }
+            if (imageFileInput) {
+                imageFileInput.value = '';
+            }
+        };
+    }
+    
+    // ✅ 프로필 저장 버튼 - 강화된 이벤트 리스너
+    if (saveProfileBtn) {
+        console.log("저장 버튼 발견! 이벤트 리스너 등록 중...");
+        console.log("저장 버튼 요소:", saveProfileBtn);
+        console.log("저장 버튼 disabled 상태:", saveProfileBtn.disabled);
+        console.log("저장 버튼 style:", saveProfileBtn.style.cssText);
+        
+        // 기존 모든 이벤트 리스너 제거
+        const newSaveBtn = saveProfileBtn.cloneNode(true);
+        saveProfileBtn.parentNode.replaceChild(newSaveBtn, saveProfileBtn);
+        
+        // 새로운 이벤트 리스너 등록
+        newSaveBtn.addEventListener('click', async function(e) {
+            console.log("🔥 저장 버튼 클릭 이벤트 발생!");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 버튼 비활성화로 중복 클릭 방지
+            newSaveBtn.disabled = true;
+            newSaveBtn.textContent = '저장 중...';
+            
+            try {
+                await saveProfile();
+            } catch (error) {
+                console.error("프로필 저장 중 오류:", error);
+                alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
+            } finally {
+                // 버튼 상태 복원
+                newSaveBtn.disabled = false;
+                newSaveBtn.textContent = '저장';
+            }
+        });
+        
+        // 추가 이벤트도 테스트
+        newSaveBtn.addEventListener('mousedown', function() {
+            console.log("저장 버튼 mousedown 이벤트");
+        });
+        
+        newSaveBtn.addEventListener('mouseup', function() {
+            console.log("저장 버튼 mouseup 이벤트");
+        });
+        
+        console.log("저장 버튼 이벤트 리스너 등록 완료!");
+        
+    } else {
+        console.error("❌ saveProfileBtn 요소를 찾을 수 없습니다!");
+        
+        // DOM에서 직접 찾아보기
+        const allButtons = document.querySelectorAll('button');
+        console.log("페이지의 모든 버튼들:", allButtons);
+        
+        const possibleSaveBtns = Array.from(allButtons).filter(btn => 
+            btn.textContent.includes('저장') || 
+            btn.id === 'saveProfileBtn' ||
+            btn.className.includes('save')
+        );
+        console.log("저장 관련 버튼들:", possibleSaveBtns);
+    }
+    
+    console.log("=== 프로필 편집 모달 이벤트 설정 완료 ===");
 }
+
+// 간단한 저장 버튼 테스트 함수
+function testSaveButton() {
+    const saveBtn = document.getElementById('saveProfileBtn');
+    if (saveBtn) {
+        console.log("저장 버튼 테스트:");
+        console.log("- 요소 존재:", !!saveBtn);
+        console.log("- disabled:", saveBtn.disabled);
+        console.log("- display:", getComputedStyle(saveBtn).display);
+        console.log("- visibility:", getComputedStyle(saveBtn).visibility);
+        console.log("- pointer-events:", getComputedStyle(saveBtn).pointerEvents);
+        console.log("- z-index:", getComputedStyle(saveBtn).zIndex);
+        
+        // 강제로 클릭 이벤트 발생
+        saveBtn.click();
+    } else {
+        console.error("저장 버튼을 찾을 수 없습니다!");
+    }
+}
+
+// 전역 함수로 노출
+window.testSaveButton = testSaveButton;
+
+// 프로필 저장 함수 (수정된 버전)
+async function saveProfile() {
+    console.log("saveProfile 함수 실행 시작");
+    
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("로그인된 사용자가 없습니다.");
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    
+    console.log("현재 로그인된 사용자:", user.email);
+    
+    const newNickname = document.getElementById('newNickname').value.trim();
+    const imageFileInput = document.getElementById('imageFileInput');
+    const selectedFile = imageFileInput?.files[0];
+    
+    console.log("입력된 데이터:", {
+        newNickname: newNickname,
+        selectedFile: selectedFile ? selectedFile.name : 'none'
+    });
+    
+    // 닉네임과 이미지 모두 없으면 경고
+    if (!newNickname && !selectedFile) {
+        alert('변경할 닉네임을 입력하거나 새 프로필 사진을 선택해주세요.');
+        return;
+    }
+    
+    // 닉네임 길이 체크
+    if (newNickname && (newNickname.length < 2 || newNickname.length > 20)) {
+        alert('닉네임은 2자 이상 20자 이하로 입력해주세요.');
+        return;
+    }
+    
+    try {
+        console.log("프로필 저장 프로세스 시작");
+        
+        // 업로드 진행 표시
+        const uploadProgress = document.getElementById('uploadProgress');
+        if (uploadProgress) {
+            uploadProgress.style.display = 'block';
+            console.log("업로드 진행 표시");
+        }
+        
+        let newAvatarUrl = null;
+        
+        // 이미지 업로드 처리
+        if (selectedFile) {
+            console.log("이미지 업로드 시작:", selectedFile.name);
+            
+            const storage = window.firebase.getStorage();
+            const imageRef = window.firebase.ref(storage, `profile_images/${user.uid}/${Date.now()}_${selectedFile.name}`);
+            
+            try {
+                // 기존 이미지 삭제 (선택적)
+                const currentProfile = window.currentUserProfile;
+                if (currentProfile?.avatar_url && currentProfile.avatar_url.includes('firebase')) {
+                    try {
+                        const oldImageRef = window.firebase.ref(storage, currentProfile.avatar_url);
+                        await window.firebase.deleteObject(oldImageRef);
+                        console.log("기존 이미지 삭제 완료");
+                    } catch (deleteError) {
+                        console.log('기존 이미지 삭제 실패 (무시):', deleteError);
+                    }
+                }
+                
+                // 새 이미지 업로드
+                const uploadResult = await window.firebase.uploadBytes(imageRef, selectedFile);
+                newAvatarUrl = await window.firebase.getDownloadURL(uploadResult.ref);
+                console.log('이미지 업로드 성공:', newAvatarUrl);
+                
+            } catch (uploadError) {
+                console.error('이미지 업로드 실패:', uploadError);
+                alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.');
+                return;
+            }
+        }
+        
+        // 프로필 데이터 업데이트 준비
+        const updateData = {};
+        if (newNickname) {
+            updateData.nickname = newNickname;
+            console.log("닉네임 업데이트 예정:", newNickname);
+        }
+        if (newAvatarUrl) {
+            updateData.avatar_url = newAvatarUrl;
+            console.log("아바타 URL 업데이트 예정:", newAvatarUrl);
+        }
+        
+        console.log("Firestore 업데이트 데이터:", updateData);
+        
+        // Firestore 프로필 문서 업데이트
+        const profileDocRef = window.firebase.doc(db, 'profiles', user.uid);
+        await window.firebase.setDoc(profileDocRef, updateData, { merge: true });
+        console.log("Firestore 프로필 업데이트 완료");
+        
+        // Firebase Auth 프로필 업데이트
+        const authUpdateData = {};
+        if (newNickname) {
+            authUpdateData.displayName = newNickname;
+        }
+        if (newAvatarUrl) {
+            authUpdateData.photoURL = newAvatarUrl;
+        }
+        
+        if (Object.keys(authUpdateData).length > 0) {
+            await window.firebase.updateProfile(user, authUpdateData);
+            console.log("Firebase Auth 프로필 업데이트 완료");
+        }
+        
+        // 성공 메시지 표시
+        const successMessage = document.getElementById('editSuccessMessage');
+        if (successMessage) {
+            successMessage.style.display = 'block';
+            console.log("성공 메시지 표시됨");
+        }
+        
+        // UI 새로고침
+        console.log("사용자 프로필 UI 새로고침 중...");
+        await showUserProfile();
+        
+        // 1.5초 후 모달 닫기
+        setTimeout(() => {
+            const modal = document.getElementById('profileEditModal');
+            if (modal) {
+                modal.style.display = 'none';
+                console.log("프로필 편집 모달 닫힘");
+            }
+        }, 1500);
+        
+        console.log("프로필 저장 완료");
+        
+    } catch (error) {
+        console.error('프로필 저장 실패:', error);
+        alert('프로필 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+        // 업로드 진행 표시 숨김
+        const uploadProgress = document.getElementById('uploadProgress');
+        if (uploadProgress) {
+            uploadProgress.style.display = 'none';
+        }
+        
+        console.log("saveProfile 함수 실행 완료");
+    }
+}
+
+// === 프로필 편집 모달 열기 함수 (수정된 버전) ===
+function openProfileEditModal(profileData) {
+    console.log("프로필 편집 모달 열기:", profileData);
+    
+    const modal = document.getElementById('profileEditModal');
+    if (!modal) {
+        console.error("프로필 편집 모달을 찾을 수 없습니다!");
+        return;
+    }
+    
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData.nickname || 'USER')}&background=667eea&color=fff&size=35&bold=true`;
+    
+    // 현재 정보 표시
+    const currentProfileImage = document.getElementById('currentProfileImage');
+    const currentNickname = document.getElementById('currentNickname');
+    const currentEmail = document.getElementById('currentEmail');
+    const editSuccessMessage = document.getElementById('editSuccessMessage');
+    const newNicknameInput = document.getElementById('newNickname');
+    
+    if (currentProfileImage) {
+        currentProfileImage.src = profileData.avatar_url || defaultAvatar;
+    }
+    
+    if (currentNickname) {
+        currentNickname.textContent = profileData.nickname;
+    }
+    
+    if (currentEmail) {
+        currentEmail.textContent = profileData.email || "";
+    }
+    
+    if (editSuccessMessage) {
+        editSuccessMessage.style.display = "none";
+    }
+    
+    if (newNicknameInput) {
+        newNicknameInput.value = "";
+    }
+    
+    // 이미지 미리보기 초기화
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = 'none';
+    }
+    
+    // 파일 입력 초기화
+    const imageFileInput = document.getElementById('imageFileInput');
+    if (imageFileInput) {
+        imageFileInput.value = '';
+    }
+    
+    modal.style.display = "flex";
+    console.log("프로필 편집 모달이 표시됨");
+    
+    // 모달이 열린 후 이벤트 리스너 재설정
+    setTimeout(() => {
+        setupProfileEditModalEvents();
+    }, 100);
+}
+
+// DOMContentLoaded 이벤트에서 초기 이벤트 설정
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOMContentLoaded - 프로필 편집 모달 이벤트 설정");
+    setupProfileEditModalEvents();
+});
 
 // === 편집 모달 이벤트 연결 ===
 window.addEventListener('DOMContentLoaded', function() {
     const closeEdit = document.getElementById('closeProfileEditModal');
     const cancelEdit = document.getElementById('cancelEditBtn');
-    const saveEdit = document.getElementById('saveNicknameBtn');
     
     if (closeEdit) closeEdit.onclick = () => { 
         document.getElementById('profileEditModal').style.display = "none"; 
@@ -596,35 +1011,6 @@ window.addEventListener('DOMContentLoaded', function() {
     if (cancelEdit) cancelEdit.onclick = () => { 
         document.getElementById('profileEditModal').style.display = "none"; 
     };
-    
-    // 닉네임 저장 버튼 이벤트 리스너
-    if (saveEdit) {
-        saveEdit.onclick = async function () {
-            const newNickname = document.getElementById('newNickname').value.trim();
-            if (newNickname.length < 2 || newNickname.length > 20) {
-                alert('닉네임은 2자 이상 20자 이하로 입력해주세요.');
-                return;
-            }
-            const user = auth.currentUser;
-            if (!user) return;
-            try {
-                const docRef = window.firebase.doc(db, 'profiles', user.uid);
-                await window.firebase.setDoc(docRef, { nickname: newNickname }, { merge: true });
-                await window.firebase.updateProfile(user, { displayName: newNickname });
-                document.getElementById('editSuccessMessage').style.display = "block";
-                
-                // 프로필 갱신은 한 번만 호출
-                await showUserProfile();
-                
-                setTimeout(() => {
-                    document.getElementById('profileEditModal').style.display = "none";
-                }, 1000);
-            } catch (error) {
-                console.error('닉네임 수정 중 오류 발생:', error);
-                alert('닉네임 수정에 실패했습니다. 다시 시도해주세요.');
-            }
-        };
-    }
 });
 
 // saveVoteToFirestore - firebase 네임스페이스 통일
@@ -953,12 +1339,25 @@ async function getAllMatchData() {
     return matchMap;
 }
 
-// 비동기로 변경된 renderMatches 함수
+// ✅ renderMatches 함수 - 수정된 페이지 감지 로직 사용
 async function renderMatches() {
+    // shouldRenderMatches() 함수로 체크
+    if (!shouldRenderMatches()) {
+        console.log("renderMatches 실행 건너뜀 - 페이지 조건 불일치");
+        return;
+    }
+
     const matchContainer = document.querySelector("section.main");
+    if (!matchContainer) {
+        console.log("경기 컨테이너가 없음 - renderMatches 실행 건너뜀");
+        return;
+    }
+
+    console.log("renderMatches 실행 시작");
     const allMatches = Object.values(await getAllMatchData());
     const matchesToShow = allMatches.slice((currentPage - 1) * matchesPerPage, currentPage * matchesPerPage);
 
+    // 기존 경기 목록 제거
     document.querySelectorAll(".match-list").forEach(el => el.remove());
     const pagination = document.querySelector(".pagination-container");
 
@@ -977,44 +1376,78 @@ async function renderMatches() {
         </div>
     `).join("");
 
-    pagination.insertAdjacentHTML("beforebegin", html);
+    if (pagination) {
+        pagination.insertAdjacentHTML("beforebegin", html);
+    } else {
+        matchContainer.innerHTML += html;
+    }
+
     setupMatchClickListeners();
     updateButtons(); // 페이지 버튼도 함께 갱신
+    console.log("renderMatches 실행 완료");
 }
 
+// ✅ updateButtons 함수 - 수정된 페이지 감지 로직 사용
 async function updateButtons() {
+    // shouldRenderMatches() 함수로 체크
+    if (!shouldRenderMatches()) {
+        return;
+    }
+
     const totalPages = await getTotalPages();
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
+    
+    // null 체크 추가
+    if (prevBtn) {
+        prevBtn.disabled = currentPage === 1;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = currentPage === totalPages;
+    }
 }
 
-// 페이지네이션 이벤트 (중복되지 않게 1회만!)
-prevBtn?.addEventListener('click', async () => {
-    if (currentPage > 1) {
-        currentPage--;
-        await renderMatches();
-    }
-});
+// ✅ 페이지네이션 이벤트 - 수정된 페이지 감지 로직 사용
+if (prevBtn) {
+    prevBtn.addEventListener('click', async () => {
+        if (!shouldRenderMatches()) return; // 수정된 조건
+        
+        if (currentPage > 1) {
+            currentPage--;
+            await renderMatches();
+        }
+    });
+}
 
-nextBtn?.addEventListener('click', async () => {
-    const totalPages = await getTotalPages();
-    if (currentPage < totalPages) {
-        currentPage++;
-        await renderMatches();
-    }
-});
+if (nextBtn) {
+    nextBtn.addEventListener('click', async () => {
+        if (!shouldRenderMatches()) return; // 수정된 조건
+        
+        const totalPages = await getTotalPages();
+        if (currentPage < totalPages) {
+            currentPage++;
+            await renderMatches();
+        }
+    });
+}
 
 // 검색창 필터링
-document.querySelector('.search-bar')?.addEventListener('input', function (e) {
-    const keyword = e.target.value.toLowerCase();
-    document.querySelectorAll('section.main .match').forEach(match => {
-        match.style.display = match.textContent.toLowerCase().includes(keyword) ? 'block' : 'none';
+const searchBar = document.querySelector('.search-bar');
+if (searchBar) {
+    searchBar.addEventListener('input', function (e) {
+        const keyword = e.target.value.toLowerCase();
+        document.querySelectorAll('section.main .match').forEach(match => {
+            match.style.display = match.textContent.toLowerCase().includes(keyword) ? 'block' : 'none';
+        });
     });
-});
+}
 
 // 패널 닫기 버튼 및 오버레이 클릭 시 닫힘 처리
-closePanelBtn?.addEventListener("click", closePanel);
-overlay?.addEventListener("click", closePanel);
+if (closePanelBtn) {
+    closePanelBtn.addEventListener("click", closePanel);
+}
+if (overlay) {
+    overlay.addEventListener("click", closePanel);
+}
 
 // HTML 이스케이프
 function escapeHtml(text) {
@@ -1037,7 +1470,7 @@ async function renderPanelTabs(matchDetails, matchId) {
     return `
         <div class="tab-container">
             <div class="tabs">
-                <div class="tab active" data-tab="lineup">호실 명단</div>
+                <div class="tab active" data-tab="lineup">라인업</div>
                 <div class="tab" data-tab="chat">채팅</div>
             </div>
             <div class="tab-contents">
@@ -1285,6 +1718,9 @@ async function logout() {
 }
 
 // 전역 함수로 노출
+window.openProfileEditModal = openProfileEditModal;
+window.saveProfile = saveProfile;
+window.setupProfileEditModalEvents = setupProfileEditModalEvents;
 window.forceUpdatePointsUI = forceUpdatePointsUI;
 window.testPointsDisplay = testPointsDisplay;
 window.setMatchResult = setMatchResult;
