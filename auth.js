@@ -428,7 +428,7 @@ class AuthManager {
 
     // 회원가입 폼
     this.eventManager.addListener(
-      document.getElementById('saveProfileBtn'),
+      document.getElementById('signupSaveProfileBtn'),
       'click',
       () => this.handleSaveProfile()
     );
@@ -587,7 +587,7 @@ class AuthManager {
     }
 
     const nickname = document.getElementById('nickname')?.value.trim();
-    const saveBtn = document.getElementById('saveProfileBtn');
+    const saveBtn = document.getElementById('signupSaveProfileBtn');
     
     if (!nickname) {
       alert(ERROR_MESSAGES.NICKNAME_REQUIRED);
@@ -632,7 +632,7 @@ class AuthManager {
       
       console.log('이메일 인증 메일 발송 완료');
       
-      alert('인증 이메일이 발송되었습니다.\n이메일을 확인하고 인증을 완료한 후 "이메일 인증 확인" 버튼을 클릭해주세요.');
+      alert('인증 이메일이 발송되었습니다.\n이메일을 확인하고(특히 스팸함) 인증을 완료한 후 "이메일 인증 확인" 버튼을 클릭해주세요.');
 
       // ✅ UI를 이메일 인증 대기 상태로 변경
       this.updateUIForEmailVerification();
@@ -959,7 +959,7 @@ class AuthManager {
    * ✅ 개선된 이메일 인증 대기 상태 UI 업데이트
    */
   updateUIForEmailVerification() {
-    const saveBtn = document.getElementById('saveProfileBtn');
+    const saveBtn = document.getElementById('signupSaveProfileBtn');
     const checkVerificationBtn = document.getElementById('checkVerificationBtn');
     const buttonContainer = saveBtn?.parentElement;
     
@@ -1021,7 +1021,7 @@ class AuthManager {
    * ✅ 프로필 모달 UI 초기 상태로 리셋
    */
   resetProfileModalUI() {
-    const saveBtn = document.getElementById('saveProfileBtn');
+    const saveBtn = document.getElementById('signupSaveProfileBtn');
     const checkVerificationBtn = document.getElementById('checkVerificationBtn');
     
     if (saveBtn) {
