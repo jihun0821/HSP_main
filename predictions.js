@@ -1,405 +1,362 @@
-// predictions.js
-let currentUser = null;
-let currentCategory = null;
-let selectedOption = null;
+// predictions.js - 리더보드 전용
+let currentLeaderboardPage = 1;
+const usersPerPage = 10;
+let allLeaderboardUsers = [];
 
 // Firebase 초기화 대기
 window.addEventListener('DOMContentLoaded', () => {
-    // 인증 상태 변경 감지
-    if (window.firebase && window.firebase.onAuthStateChanged) {
-        const auth = window.firebase.getAuth();
-        window.firebase.onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                loadUserPredictions();
-                loadChartData();
-            }
-        });
-    }
+    // script.js에서 Firebase가 초기화될 때까지 대기
+    const waitForFirebase = () => {
+        if (window.db && window.auth && window.firebase) {
+            console.log("predictions.js - Firebase 변수들이 준비됨");
+            
+            // 인증 상태 변경 감지
+            window.firebase.onAuthStateChanged(window.auth, (user) => {
+                // 로그인 여부와 관계없이 리더보드 로드
+                loadLeaderboard();
+            });
+            
+            // 페이지네이션 버튼 이벤트 리스너
+            setupPaginationEvents();
+            
+        } else {
+            console.log("predictions.js - Firebase 변수들 대기 중...", {
+                db: !!window.db,
+                auth: !!window.auth,
+                firebase: !!window.firebase
+            });
+            setTimeout(waitForFirebase, 100);
+        }
+    };
+    
+    waitForFirebase();
 });
 
-const predictionOptions = {
-    scorer: [
-        '이승민', '김태현', '박준호', '최민수', '정우진',
-        '한동원', '김민성', '이재혁', '박성훈', '조영수'
-    ],
-    champion: [
-        // 우승팀 예측용 실질적 선택지 (select에서만 사용)
-        'C101','C102','C103','C104','C105','C106',
-        'C201','C202','C203','C204','C205','C206','C207',
-        'C301','C302','C303','C304','C305','C306','C307'
-    ],
-    assist: [
-        '김현우', '박지훈', '이동현', '최준영', '정민호',
-        '한승우', '김동민', '이성민', '박태준', '조민수'
-    ]
-};
-
-const categoryTitles = {
-    scorer: '🥅 득점왕 예측',
-    champion: '🏆 우승팀 예측',
-    assist: '🅰️ 도움왕 예측'
-};
-
-// 예측 모달 열기
-function openPredictionModal(category) {
-    if (!currentUser) {
-        alert('로그인이 필요합니다.');
-        return;
+// 페이지네이션 이벤트 설정
+function setupPaginationEvents() {
+    const prevBtn = document.getElementById('prevLeaderboardBtn');
+    const nextBtn = document.getElementById('nextLeaderboardBtn');
+    const retryBtn = document.getElementById('retry-leaderboard');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (currentLeaderboardPage > 1) {
+                currentLeaderboardPage--;
+                renderLeaderboardTable();
+                updatePaginationButtons();
+            }
+        });
     }
     
-    currentCategory = category;
-    selectedOption = null;
-    
-    const modal = document.getElementById('predictionModal');
-    const title = document.getElementById('modal-title');
-    const inputContainer = document.getElementById('prediction-input-container');
-    const inputBox = document.getElementById('prediction-input');
-    const submitBtn = document.getElementById('submit-prediction');
-
-    title.textContent = categoryTitles[category];
-    
-    // 기존 input/select 초기화
-    inputContainer.innerHTML = '';
-    inputContainer.style.display = 'block';
-    submitBtn.disabled = true;
-    modal.style.display = 'block';
-
-    if (category === 'champion') {
-        // Select로 변경
-        const select = document.createElement('select');
-        select.id = 'prediction-select';
-        select.className = 'prediction-select';
-        select.innerHTML = `<option value="">우승팀을 선택하세요</option>` +
-            predictionOptions.champion.map(opt => `<option value="${opt}">${opt}</option>`).join('');
-        inputContainer.appendChild(select);
-
-        select.onchange = function() {
-            if (select.value) {
-                selectedOption = select.value;
-                submitBtn.disabled = false;
-            } else {
-                selectedOption = null;
-                submitBtn.disabled = true;
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(allLeaderboardUsers.length / usersPerPage);
+            if (currentLeaderboardPage < totalPages) {
+                currentLeaderboardPage++;
+                renderLeaderboardTable();
+                updatePaginationButtons();
             }
-        };
-    } else {
-        // 기본 input 사용
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'prediction-input';
-        input.className = 'prediction-input';
-        input.placeholder = "예측을 입력하세요";
-        inputContainer.appendChild(input);
-        input.oninput = function() {
-            if (input.value.trim().length > 0) {
-                selectedOption = input.value.trim();
-                submitBtn.disabled = false;
-            } else {
-                selectedOption = null;
-                submitBtn.disabled = true;
-            }
-        };
+        });
+    }
+    
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+            loadLeaderboard();
+        });
     }
 }
 
-async function submitPrediction() {
-    if (!currentUser || !currentCategory || !selectedOption) {
-        return;
-    }
+// 리더보드 데이터 로드
+async function loadLeaderboard() {
+    console.log("리더보드 로드 시작");
+    showLoading();
     
     try {
-        const db = window.firebase.getFirestore();
-        const userEmail = currentUser.email;
-        const timestamp = new Date().toISOString();
-
-        // 기존 선택 불러오기
-        const userPredictionsRef = window.firebase.doc(db, 'predictions', userEmail);
-        const userDoc = await window.firebase.getDoc(userPredictionsRef);
-        let previousChoice = null;
-        if (userDoc.exists() && userDoc.data()[currentCategory]) {
-            previousChoice = userDoc.data()[currentCategory].choice;
-        }
-
-        // 만약 기존 선택과 같으면 아무 것도 하지 않음
-        if (previousChoice === selectedOption) {
-            alert('이미 동일한 예측을 하셨습니다!');
-            closePredictionModal();
+        // script.js에서 선언된 전역 변수 사용
+        if (!window.db) {
+            console.error("Firebase db가 초기화되지 않았습니다.");
+            showError();
             return;
         }
-
-        // 통계 업데이트
-        const statsRef = window.firebase.doc(db, 'prediction_stats', currentCategory);
-        const statsDoc = await window.firebase.getDoc(statsRef);
-
-        let currentStats = {};
-        if (statsDoc.exists()) {
-            currentStats = statsDoc.data();
-        }
-
-        // 기존 선택이 있었다면 감소
-        if (previousChoice && currentStats[previousChoice]) {
-            currentStats[previousChoice] = Math.max(0, (currentStats[previousChoice] || 0) - 1);
-        }
-        // 새 선택 증가
-        currentStats[selectedOption] = (currentStats[selectedOption] || 0) + 1;
-
-        // 1. 유저별 예측값 덮어쓰기
-        await window.firebase.setDoc(
-            userPredictionsRef,
-            {
-                [currentCategory]: {
-                    choice: selectedOption,
-                    timestamp: timestamp
-                }
-            },
-            { merge: true }
-        );
-        // 2. 통계 업데이트
-        await window.firebase.setDoc(statsRef, currentStats);
-
-        // UI 업데이트
-        updateUserPredictionDisplay(currentCategory, selectedOption);
-        updateCategoryButton(currentCategory);
-        loadChartData();
         
-        closePredictionModal();
+        // 1. 모든 사용자 프로필 가져오기
+        const profilesSnapshot = await window.firebase.getDocs(window.firebase.collection(window.db, "profiles"));
+        const userProfiles = {};
         
-    } catch (error) {
-        console.error('예측 저장 실패:', error);
-        alert('예측 저장에 실패했습니다. 다시 시도해주세요.');
-    }
-}
-
-// 사용자 예측 표시 업데이트
-function updateUserPredictionDisplay(category, choice) {
-    const predictionDiv = document.getElementById(`${category}-prediction`);
-    predictionDiv.textContent = `내 예측: ${choice}`;
-    predictionDiv.style.display = 'block';
-}
-
-// 카테고리 버튼 업데이트
-function updateCategoryButton(category) {
-    const button = document.querySelector(`[onclick="openPredictionModal('${category}')"]`);
-    if (button) {
-        button.textContent = '예측 변경';
-        button.style.background = '#28a745';
-    }
-}
-
-// 사용자 예측 로드
-async function loadUserPredictions() {
-    if (!currentUser) return;
-    
-    try {
-        const db = window.firebase.getFirestore();
-        const userDoc = await window.firebase.getDoc(
-            window.firebase.doc(db, 'predictions', currentUser.email)
-        );
-        
-        if (userDoc.exists()) {
-            const predictions = userDoc.data();
-            
-            Object.keys(predictions).forEach(category => {
-                if (predictions[category] && predictions[category].choice) {
-                    updateUserPredictionDisplay(category, predictions[category].choice);
-                    updateCategoryButton(category);
-                }
-            });
-        }
-    } catch (error) {
-        console.error('사용자 예측 로드 실패:', error);
-    }
-}
-
-// 차트 데이터 로드 및 표시
-async function loadChartData() {
-    try {
-        const db = window.firebase.getFirestore();
-        
-        for (const category of Object.keys(predictionOptions)) {
-            const statsDoc = await window.firebase.getDoc(
-                window.firebase.doc(db, 'prediction_stats', category)
-            );
-            
-            let stats = {};
-            if (statsDoc.exists()) {
-                stats = statsDoc.data();
-            }
-            
-            renderChart(category, stats);
-        }
-    } catch (error) {
-        console.error('차트 데이터 로드 실패:', error);
-    }
-}
-
-function renderChart(category, stats) {
-    const chartContainer = document.getElementById(`${category}-chart`);
-    if (!chartContainer) return;
-
-    // 득표수 내림차순, 동률시 이름 오름차순
-    const sortedData = Object.entries(stats)
-        .sort((a, b) => {
-            if (b[1] !== a[1]) return b[1] - a[1];
-            if (!isNaN(a[0]) && !isNaN(b[0])) return Number(a[0]) - Number(b[0]);
-            return a[0].localeCompare(b[0], 'ko');
+        profilesSnapshot.forEach(doc => {
+            const data = doc.data();
+            userProfiles[doc.id] = {
+                uid: doc.id,
+                nickname: data.nickname || doc.id,
+                email: data.email || '',
+                avatar_url: data.avatar_url || null
+            };
         });
-
-    // 전체 투표수 계산
-    const totalVotes = Object.values(stats).reduce((sum, v) => sum + v, 0) || 1;
-
-    chartContainer.innerHTML = '';
-
-    if (sortedData.length === 0) {
-        chartContainer.innerHTML = '<p style="text-align: center; color: #666;">아직 예측이 없습니다.</p>';
-        return;
-    }
-
-    // 상위 3개만 기본 표시, 4위 이후는 숨김
-    const visibleCount = 3;
-    const hasOverflow = sortedData.length > visibleCount;
-    const chartList = document.createElement('div');
-    chartList.className = 'chart-list';
-
-    sortedData.forEach(([option, votes], index) => {
-        // 전체 투표수 대비 퍼센트
-        const percentage = (votes / totalVotes) * 100;
-        const chartItem = document.createElement('div');
-        chartItem.className = 'chart-item';
-        if (index >= visibleCount) {
-            chartItem.classList.add('chart-overflow');
-            chartItem.style.display = 'none';
-        }
-
-        chartItem.innerHTML = `
-            <div class="chart-label">
-                <span>${option}</span>
-                <span>${votes}표</span>
-            </div>
-            <div class="chart-bar">
-                <div class="chart-fill" style="width: ${percentage}%">
-                    ${percentage.toFixed(1)}%
-                </div>
-                ${index < 3 ? `<div class="rank-badge ${index === 1 ? 'second' : index === 2 ? 'third' : ''}">${index + 1}위</div>` : ''}
-            </div>
-        `;
-        chartList.appendChild(chartItem);
-    });
-
-    chartContainer.appendChild(chartList);
-
-    if (hasOverflow) {
-        const moreBtn = document.createElement('button');
-        moreBtn.className = 'chart-more-btn';
-        moreBtn.textContent = '더보기';
-        moreBtn.onclick = function () {
-            const overflowItems = chartList.querySelectorAll('.chart-overflow');
-            const anyHidden = Array.from(overflowItems).some(item => item.style.display === 'none');
-            overflowItems.forEach(item => {
-                item.style.display = anyHidden ? 'block' : 'none';
+        
+        console.log("사용자 프로필 로드 완료:", Object.keys(userProfiles).length, "명");
+        
+        // 2. 사용자별 포인트 가져오기
+        const pointsSnapshot = await window.firebase.getDocs(window.firebase.collection(window.db, "user_points"));
+        const userPoints = {};
+        
+        pointsSnapshot.forEach(doc => {
+            userPoints[doc.id] = doc.data().points || 0;
+        });
+        
+        console.log("포인트 데이터 로드 완료:", Object.keys(userPoints).length, "명");
+        
+        // 3. 완료된 경기 목록 가져오기 (관리자가 결과를 설정한 경기만)
+        const matchesSnapshot = await window.firebase.getDocs(window.firebase.collection(window.db, "matches"));
+        const finishedMatches = {};
+        
+        matchesSnapshot.forEach(doc => {
+            const matchData = doc.data();
+            if (matchData.status === "finished" && matchData.adminResult) {
+                finishedMatches[doc.id] = matchData.adminResult;
+            }
+        });
+        
+        console.log("완료된 경기 수:", Object.keys(finishedMatches).length);
+        
+        // 4. 모든 투표 데이터 가져오기
+        const votesSnapshot = await window.firebase.getDocs(window.firebase.collection(window.db, "votes"));
+        const userStats = {};
+        
+        // 사용자별 통계 초기화
+        Object.keys(userProfiles).forEach(uid => {
+            userStats[uid] = {
+                totalVotes: 0,
+                correctVotes: 0,
+                participatedMatches: new Set() // 참여한 경기 ID 저장 (중복 방지)
+            };
+        });
+        
+        // 투표 데이터 처리
+        votesSnapshot.forEach(doc => {
+            const voteData = doc.data();
+            const { uid, matchId, voteType } = voteData;
+            
+            // 해당 경기가 완료되었고 관리자가 결과를 설정한 경우만 처리
+            if (finishedMatches[matchId] && userStats[uid]) {
+                userStats[uid].participatedMatches.add(matchId);
+                
+                // 정답 여부 확인
+                if (finishedMatches[matchId] === voteType) {
+                    userStats[uid].correctVotes++;
+                }
+            }
+        });
+        
+        // 참여횟수 계산 (Set을 사용해서 중복 제거된 경기 수)
+        Object.keys(userStats).forEach(uid => {
+            userStats[uid].totalVotes = userStats[uid].participatedMatches.size;
+        });
+        
+        console.log("투표 통계 계산 완료");
+        
+        // 5. 최종 리더보드 데이터 생성
+        allLeaderboardUsers = Object.keys(userProfiles)
+            .map(uid => {
+                const profile = userProfiles[uid];
+                const stats = userStats[uid];
+                const points = userPoints[uid] || 0;
+                const accuracy = stats.totalVotes > 0 ? 
+                    Math.round((stats.correctVotes / stats.totalVotes) * 100) : 0;
+                
+                return {
+                    uid,
+                    nickname: profile.nickname,
+                    email: profile.email,
+                    avatar_url: profile.avatar_url,
+                    points: points,
+                    totalVotes: stats.totalVotes,
+                    correctVotes: stats.correctVotes,
+                    accuracy: accuracy
+                };
+            })
+            .filter(user => user.totalVotes > 0) // 참여한 적이 있는 사용자만 포함
+            .sort((a, b) => {
+                // 1순위: 포인트 (내림차순)
+                if (b.points !== a.points) {
+                    return b.points - a.points;
+                }
+                // 2순위: 정확도 (내림차순)
+                if (b.accuracy !== a.accuracy) {
+                    return b.accuracy - a.accuracy;
+                }
+                // 3순위: 참여횟수 (내림차순)
+                return b.totalVotes - a.totalVotes;
             });
-            moreBtn.textContent = anyHidden ? '접기' : '더보기';
-        };
-        chartContainer.appendChild(moreBtn);
-    }
-}
-
-// 모달 외부 클릭시 닫기
-window.onclick = function(event) {
-    const modal = document.getElementById('predictionModal');
-    if (event.target === modal) {
-        closePredictionModal();
-    }
-}
-
-function closePredictionModal() {
-    const modal = document.getElementById('predictionModal');
-    if (modal) {
-        modal.style.display = 'none';
-        const inputContainer = document.getElementById('prediction-input-container');
-        if (inputContainer) inputContainer.innerHTML = '';
-        const submitBtn = document.getElementById('submit-prediction');
-        if (submitBtn) submitBtn.disabled = true;
-    }
-}
-window.closePredictionModal = closePredictionModal;
-
-// 리더보드용 페이지 변수 (predictions.js에서만 사용)
-const leaderboardUsersPerPage = 15;
-let leaderboardCurrentPage = 1;
-let allUsers = []; // [{uid, nickname, points, totalVotes, correctVotes, successRate}]
-
-async function loadLeaderboard() {
-    const db = firebase.getFirestore();
-    // 전체 사용자 uid, 닉네임
-    const usersSnapshot = await firebase.getDocs(firebase.collection(db, "profiles"));
-    const userList = [];
-    usersSnapshot.forEach(doc => {
-        userList.push({ uid: doc.id, nickname: doc.data().nickname || doc.id });
-    });
-
-    // 포인트
-    const pointSnapshot = await firebase.getDocs(firebase.collection(db, "user_points"));
-    const pointsDict = {};
-    pointSnapshot.forEach(doc => {
-        pointsDict[doc.id] = doc.data().points || 0;
-    });
-
-    // 전체 votes
-    const votesSnapshot = await firebase.getDocs(firebase.collection(db, "votes"));
-    // finished 경기 결과
-    const matchesSnapshot = await firebase.getDocs(firebase.collection(db, "matches"));
-    const finishedMatches = {};
-    matchesSnapshot.forEach(doc => {
-        if (doc.data().status === "finished" && doc.data().adminResult) {
-            finishedMatches[doc.id] = doc.data().adminResult;
+        
+        console.log("최종 리더보드 사용자 수:", allLeaderboardUsers.length);
+        
+        // 리더보드 렌더링
+        if (allLeaderboardUsers.length > 0) {
+            currentLeaderboardPage = 1;
+            renderLeaderboardTable();
+            updatePaginationButtons();
+            showLeaderboard();
+        } else {
+            showEmpty();
         }
-    });
-
-    // uid별 집계
-    const userStats = {};
-    votesSnapshot.forEach(doc => {
-        const { uid, matchId, voteType } = doc.data();
-        if (!userStats[uid]) userStats[uid] = { total: 0, correct: 0 };
-        userStats[uid].total++;
-        // 맞춘 경기 체크
-        if (finishedMatches[matchId] && finishedMatches[matchId] === voteType) {
-            userStats[uid].correct++;
-        }
-    });
-
-    // 합쳐서 allUsers 만듦
-    allUsers = userList.map(user => {
-        const stat = userStats[user.uid] || { total: 0, correct: 0 };
-        const points = pointsDict[user.uid] || 0;
-        return {
-            ...user,
-            points,
-            totalVotes: stat.total,
-            correctVotes: stat.correct,
-            successRate: stat.total ? Math.round((stat.correct / stat.total) * 100) : 0
-        };
-    });
-
-    // 포인트순 내림차순
-    allUsers.sort((a, b) => b.points - a.points);
-
-    renderLeaderboardTable();
+        
+    } catch (error) {
+        console.error("리더보드 로드 실패:", error);
+        showError();
+    }
 }
 
+// 리더보드 테이블 렌더링
 function renderLeaderboardTable() {
-    const tableBody = document.getElementById('leaderboardBody');
-    const start = (leaderboardCurrentPage - 1) * leaderboardUsersPerPage;
-    const pageUsers = allUsers.slice(start, start + leaderboardUsersPerPage);
-    tableBody.innerHTML = pageUsers.map((user, idx) => `
-        <tr>
-            <td>${start + idx + 1}</td>
-            <td>${user.nickname}</td>
-            <td>${user.totalVotes}</td>
-            <td>${user.successRate}%</td>
-            <td>${user.points}</td>
-        </tr>
-    `).join('');
-    // 페이지네이션 버튼 활성/비활성 등 추가 구현
+    const tbody = document.getElementById('leaderboard-body');
+    if (!tbody) return;
+    
+    const startIndex = (currentLeaderboardPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    const pageUsers = allLeaderboardUsers.slice(startIndex, endIndex);
+    
+    tbody.innerHTML = '';
+    
+    pageUsers.forEach((user, index) => {
+        const globalRank = startIndex + index + 1;
+        const row = document.createElement('tr');
+        
+        // 상위 3위 특별 스타일 적용
+        if (globalRank <= 3) {
+            row.classList.add('top-rank');
+        }
+        
+        // 프로필 이미지 URL 생성
+        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nickname)}&background=667eea&color=fff&size=40&bold=true`;
+        const avatarUrl = user.avatar_url || defaultAvatar;
+        
+        // 순위 색상 클래스
+        let rankClass = '';
+        if (globalRank === 1) rankClass = 'gold';
+        else if (globalRank === 2) rankClass = 'silver';
+        else if (globalRank === 3) rankClass = 'bronze';
+        
+        // 정확도에 따른 색상 클래스
+        let accuracyClass = '';
+        if (user.accuracy >= 70) accuracyClass = 'high';
+        else if (user.accuracy >= 50) accuracyClass = 'medium';
+        else accuracyClass = 'low';
+        
+        row.innerHTML = `
+            <td>
+                <span class="rank-number ${rankClass}">${globalRank}</span>
+            </td>
+            <td>
+                <img src="${avatarUrl}" alt="${user.nickname}" class="profile-avatar" 
+                     onerror="this.src='${defaultAvatar}'">
+            </td>
+            <td>
+                <div class="user-nickname">${escapeHtml(user.nickname)}</div>
+            </td>
+            <td>
+                <span class="participation-count">${user.totalVotes}회</span>
+            </td>
+            <td>
+                <span class="accuracy-rate ${accuracyClass}">${user.accuracy}%</span>
+            </td>
+            <td>
+                <span class="user-points">${user.points}P</span>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
 }
+
+// 페이지네이션 버튼 업데이트
+function updatePaginationButtons() {
+    const totalPages = Math.ceil(allLeaderboardUsers.length / usersPerPage);
+    const prevBtn = document.getElementById('prevLeaderboardBtn');
+    const nextBtn = document.getElementById('nextLeaderboardBtn');
+    const pageInfo = document.getElementById('leaderboard-page-info');
+    
+    // null 체크 추가하여 오류 방지
+    if (prevBtn) {
+        prevBtn.disabled = currentLeaderboardPage <= 1;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = currentLeaderboardPage >= totalPages;
+    }
+    
+    if (pageInfo) {
+        pageInfo.textContent = `${currentLeaderboardPage} / ${Math.max(1, totalPages)}`;
+    }
+}
+
+// UI 상태 관리 함수들
+function showLoading() {
+    hideAllContainers();
+    const loadingContainer = document.getElementById('leaderboard-loading');
+    if (loadingContainer) {
+        loadingContainer.style.display = 'block';
+    }
+}
+
+function showLeaderboard() {
+    hideAllContainers();
+    const leaderboardContainer = document.getElementById('leaderboard-container');
+    if (leaderboardContainer) {
+        leaderboardContainer.style.display = 'block';
+    }
+}
+
+function showError() {
+    hideAllContainers();
+    const errorContainer = document.getElementById('leaderboard-error');
+    if (errorContainer) {
+        errorContainer.style.display = 'block';
+    }
+}
+
+function showEmpty() {
+    hideAllContainers();
+    const emptyContainer = document.getElementById('leaderboard-empty');
+    if (emptyContainer) {
+        emptyContainer.style.display = 'block';
+    }
+}
+
+function hideAllContainers() {
+    const containers = [
+        'leaderboard-loading',
+        'leaderboard-container', 
+        'leaderboard-error',
+        'leaderboard-empty'
+    ];
+    
+    containers.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+}
+
+// HTML 이스케이프 함수
+function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// 리더보드 새로고침 함수 (외부에서 호출 가능)
+function refreshLeaderboard() {
+    console.log("리더보드 새로고침 요청");
+    loadLeaderboard();
+}
+
+// 전역 함수로 노출
+window.refreshLeaderboard = refreshLeaderboard;
+
+// 리더보드 자동 새로고침 (5분마다)
+setInterval(() => {
+    console.log("자동 리더보드 새로고침");
+    loadLeaderboard();
+}, 5 * 60 * 1000); // 5분
