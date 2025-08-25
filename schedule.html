@@ -28,6 +28,10 @@
     collection, query, where, getDocs, orderBy, serverTimestamp
   } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+  import {
+    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
   window.firebase = {
     initializeApp,
     getAuth,
@@ -47,10 +51,15 @@
     where,
     getDocs,
     onSnapshot,
-    orderBy,       // 추가
-    addDoc,        // 추가
-    deleteDoc,     // 추가
-    serverTimestamp // 추가
+    orderBy,       
+    addDoc,        
+    deleteDoc,     
+    serverTimestamp, 
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
   };
 </script>
 </head>
@@ -193,24 +202,24 @@
     </div>
 
     <!-- 프로필 모달 (회원가입 완료용) -->
-    <div id="profileModal" class="auth-modal" style="display: none;">
-        <div class="auth-modal-content">
-            <span class="auth-modal-close" id="closeProfileModal">&times;</span>
-            <h2 style="margin-bottom: 24px;">프로필 설정</h2>
-            <div class="auth-form">
-                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
-                    닉네임을 설정해주세요. (2-20자)
-                </p>
-                <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
-                
-                <!-- 버튼들 -->
-                <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button id="saveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
-                    <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
-                </div>
+<div id="profileModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-content">
+        <span class="auth-modal-close" id="closeProfileModal">&times;</span>
+        <h2 style="margin-bottom: 24px;">프로필 설정</h2>
+        <div class="auth-form">
+            <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                닉네임을 설정해주세요. (2-20자)
+            </p>
+            <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
+            
+            <!-- 버튼들 -->
+            <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="signupSaveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
+                <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- 비밀번호 재설정 모달 -->
     <div id="passwordResetModal" class="auth-modal" style="display: none;">
@@ -232,7 +241,7 @@
       </div>
     </div>
 
-    <!-- 닉네임 변경 모달 -->
+    <!-- 프로필 편집 모달 -->
     <div id="profileEditModal" class="profile-edit-modal" style="display: none;">
         <div class="profile-edit-modal-content">
             <span class="profile-edit-modal-close" id="closeProfileEditModal">&times;</span>
@@ -240,7 +249,13 @@
             
             <!-- 현재 프로필 정보 표시 -->
             <div class="current-profile-info">
-                <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                <div class="profile-image-container">
+                    <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                    <div class="image-overlay">
+                        <button id="changeImageBtn" class="change-image-btn">사진 변경</button>
+                    </div>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
                 <div class="current-nickname" id="currentNickname"></div>
                 <div class="current-email" id="currentEmail"></div>
             </div>
@@ -255,13 +270,28 @@
                     maxlength="20"
                 />
                 
+                <!-- 이미지 미리보기 -->
+                <div id="imagePreviewContainer" style="display: none;">
+                    <label>새 프로필 사진 미리보기:</label>
+                    <img id="imagePreview" src="" alt="미리보기" class="image-preview">
+                    <button id="cancelImageBtn" class="cancel-image-btn">이미지 취소</button>
+                </div>
+                
                 <div class="edit-buttons">
-                    <button id="saveNicknameBtn" class="edit-btn save-btn">저장</button>
+                    <button id="saveProfileBtn" class="edit-btn save-btn">저장</button>
                     <button id="cancelEditBtn" class="edit-btn cancel-btn">취소</button>
                 </div>
                 
+                <!-- 업로드 진행 표시 -->
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">업로드 중...</span>
+                </div>
+                
                 <div id="editSuccessMessage" class="success-message" style="display: none;">
-                    닉네임이 성공적으로 변경되었습니다!
+                    프로필이 성공적으로 변경되었습니다!
                 </div>
             </div>
         </div>
