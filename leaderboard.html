@@ -29,6 +29,10 @@
     collection, query, where, getDocs
   } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+  import {
+    getStorage, ref, uploadBytes, getDownloadURL, deleteObject
+  } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
   window.firebase = {
     initializeApp,
     getAuth,
@@ -37,7 +41,7 @@
     signOut,
     onAuthStateChanged,
     sendEmailVerification,
-    sendPasswordResetEmail, 
+    sendPasswordResetEmail,
     updateProfile,
     getFirestore,
     doc,
@@ -47,10 +51,14 @@
     query,
     where,
     getDocs,
-    onSnapshot
+    onSnapshot,
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL,
+    deleteObject
   };
 </script>
-
 
 </head>
 <body>
@@ -116,51 +124,54 @@
 
 <main>
     <section class="main">
-        <div class="prediction-section">
-            <div class="prediction-header">
-                <h2>⚽ 승부예측</h2>
-                <p>득점왕, 우승팀, 도움왕을 예측해보세요!</p>
+        <div class="leaderboard-section">
+            <div class="leaderboard-header">
+                <h2>🏆 리더보드</h2>
             </div>
             
-            <div class="prediction-categories">
-                <div class="category-card">
-                    <h3>🥅 득점왕</h3>
-                    <p style="margin-bottom: 15px;">누가 가장 많은 골을 넣을까요?</p>
-                    <button class="prediction-btn" onclick="openPredictionModal('scorer')">예측하기</button>
-                    <div id="scorer-prediction" class="user-prediction" style="display: none;"></div>
+            <!-- 로딩 상태 -->
+            <div id="leaderboard-loading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>리더보드를 불러오는 중...</p>
+            </div>
+            
+            <!-- 리더보드 테이블 -->
+            <div id="leaderboard-container" class="leaderboard-container" style="display: none;">
+                <div class="leaderboard-table-wrapper">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th class="rank-col">순위</th>
+                                <th class="profile-col">프로필</th>
+                                <th class="nickname-col">닉네임</th>
+                                <th class="participation-col">참여횟수</th>
+                                <th class="accuracy-col">정확도</th>
+                                <th class="points-col">포인트</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- 리더보드 데이터가 여기에 동적으로 추가됩니다 -->
+                        </tbody>
+                    </table>
                 </div>
                 
-                <div class="category-card">
-                    <h3>🏆 우승팀</h3>
-                    <p style="margin-bottom: 15px;">어느 팀이 우승할까요?</p>
-                    <button class="prediction-btn" onclick="openPredictionModal('champion')">예측하기</button>
-                    <div id="champion-prediction" class="user-prediction" style="display: none;"></div>
-                </div>
-                
-                <div class="category-card">
-                    <h3>🅰️ 도움왕</h3>
-                    <p style="margin-bottom: 15px;">누가 가장 많은 도움을 기록할까요?</p>
-                    <button class="prediction-btn" onclick="openPredictionModal('assist')">예측하기</button>
-                    <div id="assist-prediction" class="user-prediction" style="display: none;"></div>
+                <!-- 페이지네이션 -->
+                <div class="pagination-container">
+                    <button id="prevLeaderboardBtn" class="pagination-btn" disabled>이전</button>
+                    <span id="leaderboard-page-info" class="page-info">1 / 1</span>
+                    <button id="nextLeaderboardBtn" class="pagination-btn" disabled>다음</button>
                 </div>
             </div>
             
-            <!-- 차트 섹션 -->
-            <div id="charts-container">
-                <div class="chart-container">
-                    <div class="chart-title">🥅 득점왕 예측 현황</div>
-                    <div id="scorer-chart"></div>
-                </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">🏆 우승팀 예측 현황</div>
-                    <div id="champion-chart"></div>
-                </div>
-                
-                <div class="chart-container">
-                    <div class="chart-title">🅰️ 도움왕 예측 현황</div>
-                    <div id="assist-chart"></div>
-                </div>
+            <!-- 에러 상태 -->
+            <div id="leaderboard-error" class="error-container" style="display: none;">
+                <p>리더보드를 불러오는 중 오류가 발생했습니다.</p>
+                <button id="retry-leaderboard" class="retry-btn">다시 시도</button>
+            </div>
+            
+            <!-- 빈 상태 -->
+            <div id="leaderboard-empty" class="empty-container" style="display: none;">
+                <p>아직 참여자가 없습니다.</p>
             </div>
         </div>
     </section>
@@ -204,24 +215,24 @@
     </div>
 
     <!-- 프로필 모달 (회원가입 완료용) -->
-    <div id="profileModal" class="auth-modal" style="display: none;">
-        <div class="auth-modal-content">
-            <span class="auth-modal-close" id="closeProfileModal">&times;</span>
-            <h2 style="margin-bottom: 24px;">프로필 설정</h2>
-            <div class="auth-form">
-                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
-                    닉네임을 설정해주세요. (2-20자)
-                </p>
-                <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
-                
-                <!-- 버튼들 -->
-                <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button id="saveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
-                    <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
-                </div>
+<div id="profileModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-content">
+        <span class="auth-modal-close" id="closeProfileModal">&times;</span>
+        <h2 style="margin-bottom: 24px;">프로필 설정</h2>
+        <div class="auth-form">
+            <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                닉네임을 설정해주세요. (2-20자)
+            </p>
+            <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
+            
+            <!-- 버튼들 -->
+            <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="signupSaveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
+                <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
             </div>
         </div>
     </div>
+</div>
 
     <!-- 비밀번호 재설정 모달 -->
     <div id="passwordResetModal" class="auth-modal" style="display: none;">
@@ -243,7 +254,7 @@
       </div>
     </div>
 
-    <!-- 닉네임 변경 모달 -->
+    <!-- 프로필 편집 모달 -->
     <div id="profileEditModal" class="profile-edit-modal" style="display: none;">
         <div class="profile-edit-modal-content">
             <span class="profile-edit-modal-close" id="closeProfileEditModal">&times;</span>
@@ -251,7 +262,13 @@
             
             <!-- 현재 프로필 정보 표시 -->
             <div class="current-profile-info">
-                <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                <div class="profile-image-container">
+                    <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                    <div class="image-overlay">
+                        <button id="changeImageBtn" class="change-image-btn">사진 변경</button>
+                    </div>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
                 <div class="current-nickname" id="currentNickname"></div>
                 <div class="current-email" id="currentEmail"></div>
             </div>
@@ -266,33 +283,36 @@
                     maxlength="20"
                 />
                 
+                <!-- 이미지 미리보기 -->
+                <div id="imagePreviewContainer" style="display: none;">
+                    <label>새 프로필 사진 미리보기:</label>
+                    <img id="imagePreview" src="" alt="미리보기" class="image-preview">
+                    <button id="cancelImageBtn" class="cancel-image-btn">이미지 취소</button>
+                </div>
+                
                 <div class="edit-buttons">
-                    <button id="saveNicknameBtn" class="edit-btn save-btn">저장</button>
+                    <button id="saveProfileBtn" class="edit-btn save-btn">저장</button>
                     <button id="cancelEditBtn" class="edit-btn cancel-btn">취소</button>
                 </div>
                 
+                <!-- 업로드 진행 표시 -->
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">업로드 중...</span>
+                </div>
+                
                 <div id="editSuccessMessage" class="success-message" style="display: none;">
-                    닉네임이 성공적으로 변경되었습니다!
+                    프로필이 성공적으로 변경되었습니다!
                 </div>
             </div>
         </div>
     </div>
 
-<!-- 예측 모달 -->
-<div id="predictionModal" class="prediction-modal">
-    <div class="prediction-modal-content">
-        <span class="prediction-modal-close" onclick="closePredictionModal()">&times;</span>
-        <h2 id="modal-title" class="modal-title"></h2>
-        <div id="prediction-input-container" style="margin-bottom: 20px; display:none;">
-            <input type="text" id="prediction-input" class="prediction-input" placeholder="예측을 입력하세요" />        
-        </div>
-        <button id="submit-prediction" class="submit-prediction" onclick="submitPrediction()" disabled>예측 제출</button>
-    </div>
-</div>
-
 <script type="module" src="auth.js"></script>
-<script src="matchData.js"></script>
 <script src="script.js"></script>
 <script src="predictions.js"></script>
+
 </body>
 </html>
