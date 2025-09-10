@@ -5,7 +5,7 @@ const closePanelBtn = document.getElementById("closePanelBtn");
 const panelContent = document.getElementById("panelContent");
 const panelTitle = document.getElementById("panelTitle");
 
-let currentPage = 6;
+let currentPage = 8;
 const matchesPerPage = 5;
 
 // 관리자 권한 관련 전역 변수
