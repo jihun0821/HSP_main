@@ -357,25 +357,71 @@
     </div>
     <div class="overlay" id="overlay"></div>
 
-    <!-- 관리자용: 경기 추가 모달 -->
+    <!-- 관리자용: 경기 추가 모달 (확장: id, scores, lineups, stats, events 등 입력 가능) -->
     <div id="addMatchModal" class="auth-modal" style="display:none;">
-      <div class="auth-modal-content" style="max-width:480px;">
+      <div class="auth-modal-content" style="max-width:640px;">
         <span class="auth-modal-close" id="closeAddMatchModal">&times;</span>
-        <h2 style="margin-bottom: 16px;">경기 추가 (관리자)</h2>
-        <div class="auth-form" style="display:flex; flex-direction:column; gap:8px;">
+        <h2 style="margin-bottom: 12px;">경기 추가 (관리자)</h2>
+        <div class="auth-form" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <!-- 상단: 기본 정보 -->
+          <label style="grid-column: 1 / 3;">문서 ID (선택) <small style="color:#666;">(비워두면 자동생성)</small></label>
+          <input id="addMatchId" type="text" placeholder="예: 18 (문자열 가능)" style="grid-column: 1 / 3;" />
+
           <label>날짜</label>
           <input id="addMatchDate" type="date" />
           <label>시간</label>
           <input id="addMatchTime" type="time" />
+
           <label>홈팀</label>
           <input id="addMatchHome" type="text" placeholder="홈팀 이름" />
           <label>원정팀</label>
           <input id="addMatchAway" type="text" placeholder="원정팀 이름" />
-          <label>리그 (선택)</label>
+
+          <label>리그</label>
           <input id="addMatchLeague" type="text" placeholder="리그명" />
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button id="submitAddMatchBtn" class="auth-btn" style="flex:1;">추가</button>
-            <button id="cancelAddMatchBtn" class="auth-btn" style="flex:1; background:#ccc;">취소</button>
+          <label>상태</label>
+          <select id="addMatchStatus">
+            <option value="scheduled">scheduled</option>
+            <option value="finished">finished</option>
+            <option value="postponed">postponed</option>
+          </select>
+
+          <!-- 점수 -->
+          <label>홈점수</label>
+          <input id="addMatchHomeScore" type="number" min="0" value="0" />
+          <label>원정점수</label>
+          <input id="addMatchAwayScore" type="number" min="0" value="0" />
+
+          <!-- 라인업: 콤마 구분으로 입력 -->
+          <label style="grid-column: 1 / 3; margin-top:6px;">홈팀 라인업 (3학년,2학년,1학년 각각 콤마로 구분)</label>
+          <input id="addHomeThird" type="text" placeholder="3학년: 선수A, 선수B" />
+          <input id="addHomeSecond" type="text" placeholder="2학년: 선수C, 선수D" />
+          <input id="addHomeFirst" type="text" placeholder="1학년: 선수E, 선수F" />
+
+          <label style="grid-column: 1 / 3; margin-top:6px;">원정팀 라인업 (콤마로 구분)</label>
+          <input id="addAwayThird" type="text" placeholder="3학년: ..." />
+          <input id="addAwaySecond" type="text" placeholder="2학년: ..." />
+          <input id="addAwayFirst" type="text" placeholder="1학년: ..." />
+
+          <!-- 스탯 -->
+          <label>홈 점유율(%)</label>
+          <input id="addHomePoss" type="number" min="0" max="100" value="50" />
+          <label>원정 점유율(%)</label>
+          <input id="addAwayPoss" type="number" min="0" max="100" value="50" />
+
+          <label>홈 슈팅</label>
+          <input id="addHomeShots" type="number" min="0" value="0" />
+          <label>원정 슈팅</label>
+          <input id="addAwayShots" type="number" min="0" value="0" />
+
+          <!-- 이벤트 및 추가 메타 -->
+          <label style="grid-column: 1 / 3; margin-top:6px;">이벤트 (선택)</label>
+          <textarea id="addMatchEvents" placeholder="각 이벤트를 한 줄씩 입력 (예: 12' 홈팀 골: 선수A)" style="grid-column:1 / 3; height:80px;"></textarea>
+
+          <!-- 버튼 -->
+          <div style="grid-column: 1 / 3; display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+            <button id="submitAddMatchBtn" class="auth-btn" style="min-width:120px;">추가</button>
+            <button id="cancelAddMatchBtn" class="auth-btn" style="background:#ccc; min-width:120px;">취소</button>
           </div>
         </div>
       </div>
