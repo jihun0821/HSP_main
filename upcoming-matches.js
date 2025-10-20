@@ -1,5 +1,6 @@
 // upcoming-matches.js - 예정된 경기 일정을 표시하는 스크립트 (오늘 제외, 가장 가까운 5경기, 클릭 시 상세 패널 오픈)
 // 관리자 전용: 경기 추가 버튼 표시 및 경기 추가 기능
+// (수정: 경기일정 카드 탐색 로직을 강화하여 h4 내부에 버튼이 있어도 정상적으로 찾습니다.)
 
 (function() {
   console.log('upcoming-matches.js 로드됨');
@@ -163,19 +164,30 @@
     }
   }
 
+  // 경기 일정 표시
   function displayUpcomingMatches(matches) {
+    // 변경: h4 안에 버튼 등이 있어도 '경기일정' 텍스트가 포함된 카드를 찾도록 강화
     const listCards = document.querySelectorAll('.side-lists .list-card');
     let container = null;
 
     listCards.forEach(card => {
-      const title = card.querySelector('.list-title');
-      if (title && title.textContent.trim() === '경기일정') {
+      const titleEl = card.querySelector('.list-title');
+      if (!titleEl) return;
+
+      // titleEl.textContent에 버튼 텍스트가 포함될 수 있으므로 공백 제거 후 포함 검사
+      const rawText = titleEl.textContent || '';
+      const compact = rawText.replace(/\s+/g, ' ').trim(); // 줄바꿈/여백 정리
+      // 디버그: 콘솔에 실제 텍스트 확인
+      console.log('list-card title text:', JSON.stringify(compact));
+
+      // '경기일정'이라는 단어가 포함되어 있으면 해당 카드로 판단
+      if (compact.indexOf('경기일정') !== -1) {
         container = card.querySelector('.list-items');
       }
     });
 
     if (!container) {
-      console.error('경기일정 컨테이너를 찾을 수 없습니다');
+      console.error('경기일정 컨테이너를 찾을 수 없습니다 (displayUpcomingMatches)');
       return;
     }
 
@@ -233,12 +245,15 @@
 
     listCards.forEach(card => {
       const title = card.querySelector('.list-title');
-      if (title && title.textContent.trim() === '경기일정') {
+      if (title && (title.textContent || '').replace(/\s+/g,' ').trim().indexOf('경기일정') !== -1) {
         container = card.querySelector('.list-items');
       }
     });
 
-    if (!container) return;
+    if (!container) {
+      console.error('경기일정 컨테이너를 찾을 수 없습니다 (displayError)');
+      return;
+    }
 
     container.innerHTML = '';
     const li = document.createElement('li');
@@ -262,11 +277,12 @@
     if (!modal) return;
     modal.style.display = 'none';
     // 폼 초기화
-    document.getElementById('addMatchDate').value = '';
-    document.getElementById('addMatchTime').value = '';
-    document.getElementById('addMatchHome').value = '';
-    document.getElementById('addMatchAway').value = '';
-    document.getElementById('addMatchLeague').value = '';
+    const f = document;
+    if (f.getElementById('addMatchDate')) f.getElementById('addMatchDate').value = '';
+    if (f.getElementById('addMatchTime')) f.getElementById('addMatchTime').value = '';
+    if (f.getElementById('addMatchHome')) f.getElementById('addMatchHome').value = '';
+    if (f.getElementById('addMatchAway')) f.getElementById('addMatchAway').value = '';
+    if (f.getElementById('addMatchLeague')) f.getElementById('addMatchLeague').value = '';
   }
 
   async function addMatchToFirestore() {
@@ -300,7 +316,6 @@
       // Date 객체 생성 (time이 없으면 정오로 설정)
       let dateObj;
       if (timeVal) {
-        // dateVal e.g. "2025-10-20", timeVal e.g. "14:30"
         dateObj = new Date(`${dateVal}T${timeVal}`);
       } else {
         dateObj = new Date(dateVal);
