@@ -299,7 +299,10 @@
             <!-- 하단 리스트들 -->
             <div class="side-lists">
                 <div class="list-card">
-                    <h4 class="list-title">경기일정</h4>
+                    <h4 class="list-title">경기일정
+                      <!-- 관리자 전용 경기 추가 버튼 (초기에는 숨김) -->
+                      <button id="addMatchBtn" class="add-match-btn" style="display:none; margin-left:12px; font-size:12px; padding:4px 8px;">경기 추가</button>
+                    </h4>
                     <ul class="list-items">
                         <li class="list-item">
                             <span>업데이트 예정</span>
@@ -353,6 +356,30 @@
         </div>
     </div>
     <div class="overlay" id="overlay"></div>
+
+    <!-- 관리자용: 경기 추가 모달 -->
+    <div id="addMatchModal" class="auth-modal" style="display:none;">
+      <div class="auth-modal-content" style="max-width:480px;">
+        <span class="auth-modal-close" id="closeAddMatchModal">&times;</span>
+        <h2 style="margin-bottom: 16px;">경기 추가 (관리자)</h2>
+        <div class="auth-form" style="display:flex; flex-direction:column; gap:8px;">
+          <label>날짜</label>
+          <input id="addMatchDate" type="date" />
+          <label>시간</label>
+          <input id="addMatchTime" type="time" />
+          <label>홈팀</label>
+          <input id="addMatchHome" type="text" placeholder="홈팀 이름" />
+          <label>원정팀</label>
+          <input id="addMatchAway" type="text" placeholder="원정팀 이름" />
+          <label>리그 (선택)</label>
+          <input id="addMatchLeague" type="text" placeholder="리그명" />
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button id="submitAddMatchBtn" class="auth-btn" style="flex:1;">추가</button>
+            <button id="cancelAddMatchBtn" class="auth-btn" style="flex:1; background:#ccc;">취소</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 로그인 모달 -->
     <div id="loginModal" class="auth-modal" style="display: none;">
