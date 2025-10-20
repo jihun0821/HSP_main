@@ -1,4 +1,5 @@
 // upcoming-matches.js - 예정된 경기 일정을 표시하는 스크립트 (오늘 제외, 가장 가까운 5경기, 클릭 시 상세 패널 오픈)
+// 관리자 전용: 경기 추가 버튼 표시 및 경기 추가 기능
 
 (function() {
   console.log('upcoming-matches.js 로드됨');
@@ -10,7 +11,6 @@
       const maxAttempts = 50; // 50 * 100ms = 5초
       const checkInterval = setInterval(() => {
         attempts++;
-        // console 디버그
         console.log(`Firebase 확인 시도 ${attempts}/${maxAttempts}...`, {
           firebase: !!window.firebase,
           db: !!window.db
@@ -60,23 +60,19 @@
 
     // 문자열인 경우 (다양한 포맷 대응)
     if (typeof dateField === 'string') {
-      // 흔한 포맷 보정: "2024.09.15" -> "2024-09-15"
       let s = dateField.trim();
       s = s.replace(/\./g, '-').replace(/\//g, '-');
 
-      // 경우에 따라 "MM-DD" 형식일 수 있으니 현재 연도로 보정
       if (/^\d{1,2}-\d{1,2}$/.test(s)) {
         const y = new Date().getFullYear();
         s = `${y}-${s}`;
       }
 
-      // Date 생성
       const d = new Date(s);
       if (!isNaN(d.getTime())) {
         return d;
       }
 
-      // 마지막 시도: 숫자 타임스탬프 문자열
       const num = Number(dateField);
       if (!isNaN(num)) {
         const d2 = new Date(num);
@@ -94,14 +90,37 @@
     return t;
   }
 
-  // 경기 일정 불러오기
+  // ------------ 관리자 관련 유틸 ------------
+  async function checkIfAdmin() {
+    try {
+      const auth = window.auth;
+      const db = window.db;
+      if (!auth || !auth.currentUser) return false;
+      const email = auth.currentUser.email;
+      if (!email) return false;
+
+      const adminDocRef = window.firebase.doc(db, 'admins', email);
+      const adminSnap = await window.firebase.getDoc(adminDocRef);
+      return adminSnap.exists();
+    } catch (e) {
+      console.error('관리자 체크 실패:', e);
+      return false;
+    }
+  }
+
+  function showAddMatchButton(show) {
+    const btn = document.getElementById('addMatchBtn');
+    if (!btn) return;
+    btn.style.display = show ? 'inline-block' : 'none';
+  }
+
+  // ------------ 경기 로드 / 렌더링 ------------
   async function loadUpcomingMatches() {
     try {
       console.log('경기 일정 로딩 시작...');
       await waitForFirebase();
       const db = window.db;
 
-      // scheduled 상태의 모든 경기 가져오기
       const qSnap = await window.firebase.getDocs(
         window.firebase.query(
           window.firebase.collection(db, 'matches'),
@@ -112,17 +131,16 @@
       console.log('scheduled 경기 조회 완료, 문서 수:', qSnap.size);
 
       const todayStart = getTodayStart();
-      // 오늘을 제외하고 '오늘 이후'의 경기만 선택 (strictly after today)
       const matches = [];
       qSnap.forEach((doc) => {
         const data = doc.data();
         const parsedDate = parseMatchDate(data.date);
         if (!parsedDate) return;
 
-        // 날짜만 비교 (시간 무시)
         const dOnly = new Date(parsedDate);
         dOnly.setHours(0,0,0,0);
 
+        // 오늘 제외 (strictly after)
         if (dOnly > todayStart) {
           matches.push({
             id: doc.id,
@@ -132,11 +150,8 @@
         }
       });
 
-      // 날짜순 정렬 (오름차순)
       matches.sort((a, b) => a.dateObj - b.dateObj);
-
-      // 가장 가까운 5경기 선택
-      const upcomingMatches = matches.slice(0, 5);
+      const upcomingMatches = matches.slice(0,5);
 
       console.log('선택된 예정 경기 수:', upcomingMatches.length, upcomingMatches);
 
@@ -148,9 +163,7 @@
     }
   }
 
-  // 경기 일정 표시
   function displayUpcomingMatches(matches) {
-    // "경기일정" 카드의 list-items 컨테이너 찾기
     const listCards = document.querySelectorAll('.side-lists .list-card');
     let container = null;
 
@@ -166,7 +179,6 @@
       return;
     }
 
-    // 비어있을 때 처리
     container.innerHTML = '';
     if (!matches || matches.length === 0) {
       const li = document.createElement('li');
@@ -179,7 +191,6 @@
       return;
     }
 
-    // 각 경기 항목 생성 (클릭 가능)
     matches.forEach(match => {
       const li = document.createElement('li');
       li.className = 'list-item upcoming-match-item';
@@ -196,12 +207,10 @@
       li.appendChild(dateSpan);
       li.appendChild(teamsSpan);
 
-      // 클릭 시 상세 패널 열기 (전역 todayMatchManager 사용)
       li.addEventListener('click', (e) => {
         e.preventDefault();
         const mid = li.dataset.matchId;
         if (!mid) return;
-        // 만약 todayMatchManager가 로드되어 있으면 호출
         if (window.todayMatchManager && typeof window.todayMatchManager.loadMatchDetails === 'function') {
           window.todayMatchManager.loadMatchDetails(mid).catch(err => {
             console.error('상세정보 로드 실패:', err);
@@ -218,7 +227,6 @@
     console.log('경기일정 표시 완료');
   }
 
-  // 오류 표시
   function displayError() {
     const listCards = document.querySelectorAll('.side-lists .list-card');
     let container = null;
@@ -242,12 +250,165 @@
     container.appendChild(li);
   }
 
-  // 페이지 로드 시 실행
+  // ------------ 관리자용: 경기 추가 기능 ------------
+  function openAddMatchModal() {
+    const modal = document.getElementById('addMatchModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+  }
+
+  function closeAddMatchModal() {
+    const modal = document.getElementById('addMatchModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    // 폼 초기화
+    document.getElementById('addMatchDate').value = '';
+    document.getElementById('addMatchTime').value = '';
+    document.getElementById('addMatchHome').value = '';
+    document.getElementById('addMatchAway').value = '';
+    document.getElementById('addMatchLeague').value = '';
+  }
+
+  async function addMatchToFirestore() {
+    try {
+      const auth = window.auth;
+      const db = window.db;
+      if (!auth || !auth.currentUser) {
+        alert('로그인된 관리자만 경기 추가가 가능합니다.');
+        return;
+      }
+
+      // 재확인: 실제로 관리자 권한 있는지 확인
+      const isAdmin = await checkIfAdmin();
+      if (!isAdmin) {
+        alert('관리자 권한이 필요합니다.');
+        showAddMatchButton(false);
+        return;
+      }
+
+      const dateVal = document.getElementById('addMatchDate').value;
+      const timeVal = document.getElementById('addMatchTime').value;
+      const homeVal = document.getElementById('addMatchHome').value.trim();
+      const awayVal = document.getElementById('addMatchAway').value.trim();
+      const leagueVal = document.getElementById('addMatchLeague').value.trim();
+
+      if (!dateVal || !homeVal || !awayVal) {
+        alert('날짜, 홈팀, 원정팀은 필수입니다.');
+        return;
+      }
+
+      // Date 객체 생성 (time이 없으면 정오로 설정)
+      let dateObj;
+      if (timeVal) {
+        // dateVal e.g. "2025-10-20", timeVal e.g. "14:30"
+        dateObj = new Date(`${dateVal}T${timeVal}`);
+      } else {
+        dateObj = new Date(dateVal);
+        dateObj.setHours(12,0,0,0);
+      }
+
+      // 문서 ID 자동 생성 방식: timestamp 기반 ID
+      const newId = Date.now().toString();
+
+      const matchRef = window.firebase.doc(db, 'matches', newId);
+      await window.firebase.setDoc(matchRef, {
+        date: dateObj,
+        time: timeVal || '',
+        homeTeam: homeVal,
+        awayTeam: awayVal,
+        league: leagueVal || '',
+        status: 'scheduled',
+        createdBy: auth.currentUser.email,
+        createdAt: new Date()
+      }, { merge: true });
+
+      alert('경기가 추가되었습니다.');
+      closeAddMatchModal();
+      // 목록 새로고침
+      await loadUpcomingMatches();
+
+    } catch (err) {
+      console.error('경기 추가 실패:', err);
+      alert('경기 추가에 실패했습니다. 콘솔을 확인하세요.');
+    }
+  }
+
+  function setupAdminUIHandlers() {
+    const addBtn = document.getElementById('addMatchBtn');
+    const closeBtn = document.getElementById('closeAddMatchModal');
+    const cancelBtn = document.getElementById('cancelAddMatchBtn');
+    const submitBtn = document.getElementById('submitAddMatchBtn');
+
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAddMatchModal();
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeAddMatchModal();
+      });
+    }
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeAddMatchModal();
+      });
+    }
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        addMatchToFirestore();
+      });
+    }
+
+    // 모달 영역 밖 클릭 시 닫기 (선택적)
+    const modal = document.getElementById('addMatchModal');
+    if (modal) {
+      modal.addEventListener('click', (ev) => {
+        if (ev.target === modal) closeAddMatchModal();
+      });
+    }
+  }
+
+  // ------------ 초기화 및 Auth 상태 감시 ------------
+  async function initializeModule() {
+    try {
+      await waitForFirebase();
+
+      // auth 상태 변화 감지해서 관리자 버튼 보이기/숨기기
+      window.firebase.onAuthStateChanged(window.auth, async (user) => {
+        if (user) {
+          const isAdmin = await checkIfAdmin();
+          showAddMatchButton(isAdmin);
+        } else {
+          showAddMatchButton(false);
+        }
+      });
+
+      // 초기 검사 (이미 로그인된 상태인 경우)
+      if (window.auth && window.auth.currentUser) {
+        const isAdminNow = await checkIfAdmin();
+        showAddMatchButton(isAdminNow);
+      }
+
+      setupAdminUIHandlers();
+
+      // 예정 경기 로드
+      await loadUpcomingMatches();
+
+    } catch (e) {
+      console.error('업데이트 모듈 초기화 실패:', e);
+    }
+  }
+
   window.addEventListener('load', () => {
-    console.log('window.load 이벤트 발생 - 예정 경기 로딩 시작');
+    console.log('window.load 이벤트 발생 - 예정 경기 로딩 및 관리자 UI 초기화');
     setTimeout(() => {
-      loadUpcomingMatches();
-    }, 1000);
+      initializeModule();
+    }, 800);
   });
 
   // 외부에서 수동 새로고침할 수 있도록 노출 (디버깅용)
