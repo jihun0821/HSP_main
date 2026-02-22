@@ -2,18 +2,8 @@
 
 let statsLeaderboardData = {
     goals: [
-        { rank: 1, name: "김한솔", value: 17, unit: "골" },
-        { rank: 2, name: "문지훈", value: 13, unit: "골" },
-        { rank: 3, name: "성준용", value: 13, unit: "골" },
-        { rank: 4, name: "조성익", value: 12, unit: "골" },
-        { rank: 5, name: "박석현", value: 11, unit: "골" }
     ],
     assists: [
-        { rank: 1, name: "김한솔", value: 9, unit: "어시" },
-        { rank: 2, name: "정채운", value: 8, unit: "어시" },
-        { rank: 3, name: "정성훈", value: 6, unit: "어시" },
-        { rank: 4, name: "금담인", value: 4, unit: "어시" },
-        { rank: 5, name: "정관호", value: 4, unit: "어시" }
     ]
 };
 
