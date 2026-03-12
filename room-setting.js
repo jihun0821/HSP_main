@@ -68,15 +68,16 @@
             btn.addEventListener('click', () => {
                 const room = btn.dataset.room;
                 saveRoom(room);
-                closeRoomModal();
-                loadNextMatch(room);
                 highlightSelected(room);
+                closeRoomModal();
+                renderRoomUI(true);   // UI 즉시 갱신 (경기 조회 포함)
             });
         });
 
         modal.querySelector('#clearRoomBtn').addEventListener('click', () => {
-            clearRoom();
+            localStorage.removeItem('hsp_user_room');
             closeRoomModal();
+            renderRoomUI(true);       // 호실 설정 버튼 상태로 즉시 복원
         });
     }
 
@@ -106,10 +107,6 @@
     // ── 로컬 저장 ─────────────────────────────────────────────────
     function saveRoom(room) { localStorage.setItem('hsp_user_room', room); }
     function getSavedRoom() { return localStorage.getItem('hsp_user_room'); }
-    function clearRoom() {
-        localStorage.removeItem('hsp_user_room');
-        renderRoomUI(false);
-    }
 
     // ── UI 전환 ──────────────────────────────────────────────────
     // 로그인 후: classRank/totalRank 영역을 호실 버튼으로 교체
