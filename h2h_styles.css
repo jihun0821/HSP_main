@@ -1,0 +1,193 @@
+/* ─────────────────────────────────────────────
+   상대전적 (H2H) 탭 스타일
+   ───────────────────────────────────────────── */
+
+/* 컨테이너 */
+.h2h-container {
+    padding: 12px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.h2h-empty {
+    text-align: center;
+    color: #888;
+    padding: 32px 0;
+    font-size: 14px;
+}
+
+/* 섹션 */
+.h2h-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.h2h-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ─── 경기 행 ─── */
+.h2h-match-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+
+.h2h-match-row:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.h2h-match-date {
+    font-size: 11px;
+    color: #888;
+    min-width: 72px;
+    flex-shrink: 0;
+}
+
+.h2h-match-teams {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #ccc;
+    justify-content: center;
+    text-align: center;
+}
+
+.h2h-highlight {
+    color: #fff;
+    font-weight: 700;
+}
+
+.h2h-score {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 2px 8px;
+    min-width: 44px;
+    text-align: center;
+}
+
+/* 결과 뱃지 */
+.h2h-result-badge {
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 3px 10px;
+    min-width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.h2h-win  { background: rgba(74, 222, 128, 0.18); color: #4ade80; }
+.h2h-draw { background: rgba(250, 204, 21, 0.15);  color: #facc15; }
+.h2h-loss { background: rgba(248, 113, 113, 0.18); color: #f87171; }
+
+/* ─── 역대 전적 그래프 ─── */
+.h2h-stats-graph {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.h2h-teams-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.h2h-team-a { color: #60a5fa; }  /* 홈팀 - 파란 계열 */
+.h2h-team-b { color: #f87171; }  /* 원정팀 - 빨간 계열 */
+
+/* 승/무/패 숫자 */
+.h2h-counts-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.h2h-count-win  { color: #60a5fa; }
+.h2h-count-draw { color: #facc15; text-align: center; flex: 1; }
+.h2h-count-loss { color: #f87171; text-align: right; }
+
+/* 막대 그래프 */
+.h2h-bar-wrap {
+    display: flex;
+    height: 10px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.06);
+}
+
+.h2h-bar-win  { background: #60a5fa; transition: width 0.5s ease; }
+.h2h-bar-draw { background: #facc15; transition: width 0.5s ease; }
+.h2h-bar-loss { background: #f87171; transition: width 0.5s ease; flex: 1; } /* 나머지 채움 */
+
+/* % 레이블 */
+.h2h-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #888;
+}
+
+.h2h-label-win  { color: #60a5fa; }
+.h2h-label-draw { color: #facc15; text-align: center; flex: 1; }
+.h2h-label-loss { color: #f87171; text-align: right; }
+
+/* 총 경기 수 */
+.h2h-total-count {
+    font-size: 11px;
+    color: #666;
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* ─── 전체 목록 토글 ─── */
+.h2h-all-toggle {
+    font-size: 12px;
+    color: #888;
+    cursor: pointer;
+    text-align: center;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.h2h-all-toggle:hover {
+    background: rgba(255,255,255,0.06);
+    color: #ccc;
+}
+
+/* 전체 목록은 기본적으로 숨김, .open 시 표시 */
+.h2h-all-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.h2h-all-list.open {
+    max-height: 1000px;
+}
