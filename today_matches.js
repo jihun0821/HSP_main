@@ -500,21 +500,17 @@ class TodayMatchManager {
                     ? `${match.homeScore} - ${match.awayScore}`
                     : '-';
 
-            // 현재 패널의 홈팀이면 굵게
-            const homeClass = match.homeTeam === homeTeam ? 'h2h-highlight' : '';
-            const awayClass = match.awayTeam === homeTeam ? 'h2h-highlight' : '';
-
             return `
                 <div class="h2h-match-row">
                     <span class="h2h-match-date">${match.date || ''}</span>
                     <div class="h2h-match-body">
                         <div class="h2h-team-block">
                             <span class="h2h-result-badge ${badgeClass(homeResult)}">${badgeLabel(homeResult)}</span>
-                            <span class="h2h-team-name ${homeClass}">${this.escapeHtml(match.homeTeam)}</span>
+                            <span class="h2h-team-name">${this.escapeHtml(match.homeTeam)}</span>
                         </div>
                         <span class="h2h-score">${scoreText}</span>
                         <div class="h2h-team-block h2h-team-block--away">
-                            <span class="h2h-team-name ${awayClass}">${this.escapeHtml(match.awayTeam)}</span>
+                            <span class="h2h-team-name">${this.escapeHtml(match.awayTeam)}</span>
                             <span class="h2h-result-badge ${badgeClass(awayResult)}">${badgeLabel(awayResult)}</span>
                         </div>
                     </div>
