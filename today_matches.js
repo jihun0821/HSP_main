@@ -40,21 +40,16 @@ class TodayMatchManager {
     normalizeDate(dateStr) {
         if (!dateStr) return '';
         
-        // 다양한 날짜 형식 처리
-        // "2024.09.15" 형식
         if (dateStr.includes('.')) {
             return dateStr.replace(/\./g, '-');
         }
-        // "2024/09/15" 형식
         if (dateStr.includes('/')) {
             return dateStr.replace(/\//g, '-');
         }
-        // "09/15" 형식 (연도 없음)
         if (/^\d{2}\/\d{2}$/.test(dateStr)) {
             const currentYear = new Date().getFullYear();
             return `${currentYear}-${dateStr.replace('/', '-')}`;
         }
-        // "9/15" 형식 (연도 없음, 0패딩 없음)
         if (/^\d{1,2}\/\d{1,2}$/.test(dateStr)) {
             const currentYear = new Date().getFullYear();
             const [month, day] = dateStr.split('/');
@@ -74,7 +69,6 @@ class TodayMatchManager {
             const todayStr = this.getTodayDateString();
             console.log("오늘 날짜:", todayStr);
 
-            // matches 컬렉션에서 모든 경기 가져오기
             const querySnapshot = await window.firebase.getDocs(
                 window.firebase.collection(this.db, "matches")
             );
@@ -87,7 +81,6 @@ class TodayMatchManager {
 
             console.log("전체 경기 수:", allMatches.length);
 
-            // 오늘 날짜와 일치하는 경기 필터링
             this.todayMatches = allMatches.filter(match => {
                 const normalizedDate = this.normalizeDate(match.date);
                 const isToday = normalizedDate === todayStr;
@@ -101,7 +94,6 @@ class TodayMatchManager {
 
             console.log("오늘의 경기 수:", this.todayMatches.length);
 
-            // 시간순으로 정렬 (시간 정보가 있는 경우)
             this.todayMatches.sort((a, b) => {
                 if (a.time && b.time) {
                     return a.time.localeCompare(b.time);
@@ -116,7 +108,7 @@ class TodayMatchManager {
         }
     }
 
-    // UI 업데이트 메서드 (today_matches.js의 updateTodayMatchUI 메서드 교체용)
+    // UI 업데이트 메서드
     updateTodayMatchUI() {
         const matchDate = document.getElementById('matchDate');
         const matchTeams = document.getElementById('matchTeams');
@@ -126,31 +118,26 @@ class TodayMatchManager {
         const matchDisplay = document.getElementById('matchDisplay');
 
         if (this.todayMatches.length === 0) {
-            // 경기가 없는 경우
             if (matchDisplay) matchDisplay.style.display = 'none';
             if (noMatches) noMatches.style.display = 'block';
             return;
         }
 
-        // 경기가 있는 경우
         if (matchDisplay) matchDisplay.style.display = 'flex';
         if (noMatches) noMatches.style.display = 'none';
 
         const currentMatch = this.todayMatches[this.currentMatchIndex];
     
-        // 날짜 표시 (시간 제외 - 공간 절약)
         if (matchDate) {
             matchDate.textContent = currentMatch.date;
         }
     
-        // 팀명 표시
         if (matchTeams) {
             matchTeams.textContent = `${currentMatch.homeTeam} vs ${currentMatch.awayTeam}`;
         }
 
-    // 내비게이션 버튼 상태 업데이트
-    this.updateNavigationButtons();
-}
+        this.updateNavigationButtons();
+    }
 
     // 내비게이션 버튼 상태 업데이트
     updateNavigationButtons() {
@@ -189,8 +176,6 @@ class TodayMatchManager {
         if (this.todayMatches.length > 0) {
             const currentMatch = this.todayMatches[this.currentMatchIndex];
             console.log("경기 상세 모달 열기:", currentMatch.id);
-            
-            // 자체 모달 열기
             this.loadMatchDetails(currentMatch.id);
         }
     }
@@ -218,7 +203,6 @@ class TodayMatchManager {
 
         let predictionHtml = "";
         
-        // 관리자 권한 체크
         let isAdmin = false;
         if (isLoggedIn) {
             try {
@@ -230,7 +214,6 @@ class TodayMatchManager {
             }
         }
         
-        // 경기가 finished 상태이고 관리자인 경우 결과 설정 버튼 표시
         if (matchDetails.status === "finished" && isAdmin && !matchDetails.adminResult) {
             predictionHtml = `
                 <h3>경기 결과 설정 (관리자)</h3>
@@ -241,9 +224,7 @@ class TodayMatchManager {
                 </div>
                 <h3>승부예측 결과</h3><div id="votingStats"></div>
             `;
-        }
-        // 관리자가 결과를 이미 설정한 경우
-        else if (matchDetails.status === "finished" && matchDetails.adminResult) {
+        } else if (matchDetails.status === "finished" && matchDetails.adminResult) {
             const resultText = {
                 'homeWin': '홈팀 승',
                 'draw': '무승부', 
@@ -254,9 +235,7 @@ class TodayMatchManager {
                 <h3>경기 결과: ${resultText}</h3>
                 <h3>승부예측 결과</h3><div id="votingStats"></div>
             `;
-        }
-        // 예정된 경기의 승부예측
-        else if (matchDetails.status === "scheduled") {
+        } else if (matchDetails.status === "scheduled") {
             if (!isLoggedIn || userVoted) {
                 predictionHtml = `<h3>승부예측 결과</h3><div id="votingStats"></div>`;
             } else {
@@ -268,9 +247,7 @@ class TodayMatchManager {
                         <button class="prediction-btn away-win" data-vote="awayWin">2</button>
                     </div>`;
             }
-        }
-        // 기타 경기 상태
-        else {
+        } else {
             predictionHtml = `<h3>승부예측 결과</h3><div id="votingStats"></div>`;
         }
 
@@ -291,7 +268,6 @@ class TodayMatchManager {
 
         this.setupPanelTabs(matchId);
 
-        // 일반 사용자 승부예측 버튼 이벤트
         const buttons = panelContent.querySelectorAll('.prediction-btn');
         buttons.forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -306,7 +282,6 @@ class TodayMatchManager {
             });
         });
 
-        // 패널 표시
         matchDetailsPanel.classList.add("active");
         overlay.classList.add("active");
         document.body.style.overflow = "hidden";
@@ -358,7 +333,6 @@ class TodayMatchManager {
             
             console.log(`라인업 조회 시작 - 홈팀: ${homeTeamName}, 원정팀: ${awayTeamName}`);
             
-            // teams 컬렉션에서 각 팀의 라인업 조회
             const homeLineup = await this.getTeamLineup(homeTeamName);
             const awayLineup = await this.getTeamLineup(awayTeamName);
             
@@ -367,7 +341,6 @@ class TodayMatchManager {
                 away: awayLineup
             };
             
-            // teams 컬렉션에서 라인업을 찾지 못한 경우 matches 컬렉션에서 폴백
             if (!homeLineup.first.length && !homeLineup.second.length && !homeLineup.third.length) {
                 console.log(`${homeTeamName} 팀의 teams 컬렉션 라인업이 비어있음, matches 컬렉션에서 폴백`);
                 if (matchDetails.lineups && matchDetails.lineups.home) {
@@ -387,8 +360,6 @@ class TodayMatchManager {
             
         } catch (error) {
             console.error("라인업 조회 중 오류 발생:", error);
-            
-            // 오류 발생 시 matches 컬렉션의 lineups 필드 사용 (폴백)
             return matchDetails.lineups || {
                 home: { first: [], second: [], third: [] },
                 away: { first: [], second: [], third: [] }
@@ -396,23 +367,195 @@ class TodayMatchManager {
         }
     }
 
-    // 패널 탭 렌더링
+    // ─────────────────────────────────────────────
+    // 패널 탭 렌더링 (라인업 / 상대전적 / 채팅)
+    // ─────────────────────────────────────────────
     async renderPanelTabs(matchDetails, matchId) {
         const lineups = await this.getMatchLineups(matchDetails);
+        const h2hHtml = await this.renderH2HContent(matchDetails.homeTeam, matchDetails.awayTeam);
         
         return `
             <div class="tab-container">
                 <div class="tabs">
                     <div class="tab active" data-tab="lineup">라인업</div>
+                    <div class="tab" data-tab="h2h">상대전적</div>
                     <div class="tab" data-tab="chat">채팅</div>
                 </div>
                 <div class="tab-contents">
                     <div class="tab-content lineup-content active">
                         ${this.renderLineup(lineups)}
                     </div>
+                    <div class="tab-content h2h-content">
+                        ${h2hHtml}
+                    </div>
                     <div class="tab-content chat-content">
                         ${this.renderChatBox(matchId)}
                     </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ─────────────────────────────────────────────
+    // 상대전적: Firestore에서 두 팀 간 모든 경기 조회
+    // home/away 순서 무관하게 필터링, 결과 있는 경기만 포함
+    // ─────────────────────────────────────────────
+    async getH2HMatches(homeTeam, awayTeam) {
+        try {
+            const querySnapshot = await window.firebase.getDocs(
+                window.firebase.collection(this.db, "matches")
+            );
+
+            const h2hMatches = [];
+            querySnapshot.forEach((doc) => {
+                const match = { id: doc.id, ...doc.data() };
+
+                // 두 팀이 맞붙은 경기인지 (홈/원정 순서 무관)
+                const isH2H =
+                    (match.homeTeam === homeTeam && match.awayTeam === awayTeam) ||
+                    (match.homeTeam === awayTeam  && match.awayTeam === homeTeam);
+
+                // 결과가 확정된 경기만 포함
+                const hasResult =
+                    match.adminResult ||
+                    (match.homeScore !== undefined && match.homeScore !== null && match.homeScore !== '' &&
+                     match.awayScore !== undefined && match.awayScore !== null && match.awayScore !== '');
+
+                if (isH2H && hasResult) {
+                    h2hMatches.push(match);
+                }
+            });
+
+            // 최신 날짜 순으로 정렬
+            h2hMatches.sort((a, b) => {
+                const da = this.normalizeDate(a.date || '');
+                const db_ = this.normalizeDate(b.date || '');
+                return db_.localeCompare(da);
+            });
+
+            return h2hMatches;
+        } catch (error) {
+            console.error("상대전적 조회 실패:", error);
+            return [];
+        }
+    }
+
+    // 특정 팀 기준으로 경기 결과 반환 ('win' | 'draw' | 'loss' | null)
+    getMatchResultForTeam(match, teamName) {
+        const isHome = match.homeTeam === teamName;
+
+        // adminResult 우선
+        if (match.adminResult) {
+            if (match.adminResult === 'draw') return 'draw';
+            if (match.adminResult === 'homeWin') return isHome ? 'win' : 'loss';
+            if (match.adminResult === 'awayWin') return isHome ? 'loss' : 'win';
+        }
+
+        // 점수로 판별
+        const hs = parseInt(match.homeScore);
+        const as_ = parseInt(match.awayScore);
+        if (isNaN(hs) || isNaN(as_)) return null;
+
+        if (hs === as_) return 'draw';
+        if (hs > as_) return isHome ? 'win' : 'loss';
+        return isHome ? 'loss' : 'win';
+    }
+
+    // 상대전적 탭 전체 HTML 생성
+    async renderH2HContent(homeTeam, awayTeam) {
+        const allMatches = await this.getH2HMatches(homeTeam, awayTeam);
+
+        if (allMatches.length === 0) {
+            return `
+                <div class="h2h-container">
+                    <div class="h2h-empty">
+                        <p>두 팀 간의 이전 경기 기록이 없습니다.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 홈팀 기준 전체 승/무/패 집계
+        let wins = 0, draws = 0, losses = 0;
+        allMatches.forEach(match => {
+            const result = this.getMatchResultForTeam(match, homeTeam);
+            if (result === 'win')   wins++;
+            else if (result === 'draw')  draws++;
+            else if (result === 'loss')  losses++;
+        });
+
+        const total    = wins + draws + losses;
+        const winPct   = total ? Math.round((wins   / total) * 100) : 0;
+        const drawPct  = total ? Math.round((draws  / total) * 100) : 0;
+        const lossPct  = total ? Math.round((losses / total) * 100) : 0;
+
+        // 경기 행 HTML 생성 헬퍼
+        const matchRowHtml = (match) => {
+            const result      = this.getMatchResultForTeam(match, homeTeam);
+            const resultLabel = { win: '승', draw: '무', loss: '패' }[result] || '-';
+            const resultClass = { win: 'h2h-win', draw: 'h2h-draw', loss: 'h2h-loss' }[result] || '';
+            const scoreText   =
+                (match.homeScore !== undefined && match.homeScore !== '' &&
+                 match.awayScore !== undefined && match.awayScore !== '')
+                    ? `${match.homeScore} - ${match.awayScore}`
+                    : '-';
+
+            return `
+                <div class="h2h-match-row">
+                    <span class="h2h-match-date">${match.date || ''}</span>
+                    <span class="h2h-match-teams">
+                        <span class="${match.homeTeam === homeTeam ? 'h2h-highlight' : ''}">${this.escapeHtml(match.homeTeam)}</span>
+                        <span class="h2h-score">${scoreText}</span>
+                        <span class="${match.awayTeam === homeTeam ? 'h2h-highlight' : ''}">${this.escapeHtml(match.awayTeam)}</span>
+                    </span>
+                    <span class="h2h-result-badge ${resultClass}">${resultLabel}</span>
+                </div>
+            `;
+        };
+
+        // 최근 5경기
+        const recent5Html = allMatches.slice(0, 5).map(matchRowHtml).join('');
+
+        // 역대 전적 막대 그래프
+        const statsGraphHtml = `
+            <div class="h2h-stats-graph">
+                <div class="h2h-teams-label">
+                    <span class="h2h-team-a">${this.escapeHtml(homeTeam)}</span>
+                    <span class="h2h-team-b">${this.escapeHtml(awayTeam)}</span>
+                </div>
+                <div class="h2h-counts-row">
+                    <span class="h2h-count-win">${wins}</span>
+                    <span class="h2h-count-draw">${draws}</span>
+                    <span class="h2h-count-loss">${losses}</span>
+                </div>
+                <div class="h2h-bar-wrap">
+                    <div class="h2h-bar-win"  style="width:${winPct}%"  title="${homeTeam} 승 ${winPct}%"></div>
+                    <div class="h2h-bar-draw" style="width:${drawPct}%" title="무승부 ${drawPct}%"></div>
+                    <div class="h2h-bar-loss" style="width:${lossPct}%" title="${awayTeam} 승 ${lossPct}%"></div>
+                </div>
+                <div class="h2h-bar-labels">
+                    <span class="h2h-label-win">${winPct}%</span>
+                    <span class="h2h-label-draw">${drawPct}%</span>
+                    <span class="h2h-label-loss">${lossPct}%</span>
+                </div>
+                <div class="h2h-total-count">총 ${total}경기 · ${homeTeam} ${wins}승 ${draws}무 ${losses}패</div>
+            </div>
+        `;
+
+        // 역대 전체 경기 목록
+        const allMatchesHtml = allMatches.map(matchRowHtml).join('');
+
+        return `
+            <div class="h2h-container">
+                <div class="h2h-section">
+                    <div class="h2h-section-title">최근 5경기</div>
+                    <div class="h2h-match-list">${recent5Html}</div>
+                </div>
+                <div class="h2h-section">
+                    <div class="h2h-section-title">역대 전적</div>
+                    ${statsGraphHtml}
+                    <div class="h2h-all-toggle" onclick="this.nextElementSibling.classList.toggle('open'); this.textContent = this.nextElementSibling.classList.contains('open') ? '▲ 경기 목록 접기' : '▼ 전체 경기 목록 보기'">▼ 전체 경기 목록 보기</div>
+                    <div class="h2h-match-list h2h-all-list">${allMatchesHtml}</div>
                 </div>
             </div>
         `;
@@ -485,22 +628,18 @@ class TodayMatchManager {
         
         tabs.forEach((tab, index) => {
             tab.onclick = () => {
-                // 모든 탭과 콘텐츠에서 active 클래스 제거
                 tabs.forEach(t => t.classList.remove('active'));
                 contents.forEach(c => c.classList.remove('active'));
                 
-                // 클릭된 탭과 해당 콘텐츠에 active 클래스 추가
                 tab.classList.add('active');
                 contents[index].classList.add('active');
                 
-                // 채팅 탭이 활성화된 경우 채팅 기능 초기화
                 if (tab.dataset.tab === "chat") {
                     this.setupChat(matchId);
                 }
             };
         });
         
-        // 기본적으로 첫 번째 탭(라인업)을 활성화
         if (tabs.length > 0 && contents.length > 0) {
             tabs[0].classList.add('active');
             contents[0].classList.add('active');
@@ -525,12 +664,10 @@ class TodayMatchManager {
             chatForm.style.display = "flex";
         }
 
-        // 기존 채팅 리스너 해제
         if (this.chatUnsubscribe) {
             this.chatUnsubscribe();
         }
 
-        // Firestore의 onSnapshot 메서드로 실시간 수신
         this.chatUnsubscribe = window.firebase.onSnapshot(
             window.firebase.query(
                 this.chatCollection(matchId),
@@ -554,7 +691,6 @@ class TodayMatchManager {
             }
         );
 
-        // 메시지 전송
         chatForm.onsubmit = async (e) => {
             e.preventDefault();
             const text = chatInput.value.trim();
@@ -585,7 +721,6 @@ class TodayMatchManager {
         const user = this.auth.currentUser;
         if (!user) return;
 
-        // votes 저장 (중복방지)
         const voteRef = window.firebase.doc(this.db, 'votes', `${matchId}_${user.uid}`);
         const voteSnap = await window.firebase.getDoc(voteRef);
 
@@ -598,7 +733,6 @@ class TodayMatchManager {
             votedAt: new Date()
         });
 
-        // user_points 자동 생성 (없을 경우)
         const pointRef = window.firebase.doc(this.db, 'user_points', user.uid);
         const pointSnap = await window.firebase.getDoc(pointRef);
         if (!pointSnap.exists()) {
@@ -689,7 +823,6 @@ class TodayMatchManager {
             return;
         }
         
-        // 관리자 권한 체크
         const adminDocRef = window.firebase.doc(this.db, "admins", user.email);
         const adminDoc = await window.firebase.getDoc(adminDocRef);
         if (!adminDoc.exists()) {
@@ -698,14 +831,12 @@ class TodayMatchManager {
         }
 
         try {
-            // 경기 결과 저장
             const matchRef = window.firebase.doc(this.db, "matches", matchId);
             await window.firebase.setDoc(matchRef, {
                 status: "finished",
                 adminResult: result
             }, { merge: true });
 
-            // votes 조회
             const votesQuery = window.firebase.query(
                 window.firebase.collection(this.db, "votes"),
                 window.firebase.where("matchId", "==", matchId)
@@ -720,14 +851,11 @@ class TodayMatchManager {
 
             console.log("승자 목록:", winners);
 
-            // 각 winner에게 100포인트씩 지급
             for (const uid of winners) {
                 await this.updateUserPoints(uid, 100);
             }
             
             alert(`${winners.length}명에게 100포인트 지급 완료!`);
-            
-            // 패널 새로고침으로 결과 반영
             this.loadMatchDetails(matchId);
             
         } catch (error) {
@@ -743,7 +871,6 @@ class TodayMatchManager {
             
             const pointRef = window.firebase.doc(this.db, "user_points", uid);
             
-            // 트랜잭션을 사용해서 더 안정적으로 포인트 업데이트
             const updatedPoints = await window.firebase.runTransaction(async (transaction) => {
                 const pointDoc = await transaction.get(pointRef);
                 let currentPoints = 0;
@@ -764,12 +891,10 @@ class TodayMatchManager {
             });
             
             console.log(`포인트 업데이트 완료 - 새 포인트: ${updatedPoints}`);
-            
             return updatedPoints;
         } catch (error) {
             console.error("포인트 업데이트 실패:", error);
             
-            // 트랜잭션이 실패하면 일반적인 업데이트 방식으로 재시도
             try {
                 console.log("트랜잭션 실패, 일반 업데이트로 재시도");
                 const pointRef = window.firebase.doc(this.db, "user_points", uid);
@@ -806,7 +931,6 @@ class TodayMatchManager {
         if (overlay) overlay.classList.remove("active");
         document.body.style.overflow = "";
         
-        // 채팅 리스너 해제
         if (this.chatUnsubscribe) {
             this.chatUnsubscribe();
             this.chatUnsubscribe = null;
@@ -815,7 +939,6 @@ class TodayMatchManager {
 
     // 이벤트 리스너 설정
     setupEventListeners() {
-        // 이전/다음 버튼 이벤트
         const prevBtn = document.getElementById('prevMatch');
         const nextBtn = document.getElementById('nextMatch');
 
@@ -827,13 +950,11 @@ class TodayMatchManager {
             nextBtn.addEventListener('click', () => this.showNextMatch());
         }
 
-        // 경기 정보 클릭 시 상세 모달 열기
         const matchInfo = document.getElementById('matchInfo');
         if (matchInfo) {
             matchInfo.style.cursor = 'pointer';
             matchInfo.addEventListener('click', () => this.openCurrentMatchDetails());
             
-            // 호버 효과
             matchInfo.addEventListener('mouseenter', () => {
                 matchInfo.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
                 matchInfo.style.borderRadius = '8px';
@@ -844,7 +965,6 @@ class TodayMatchManager {
             });
         }
 
-        // 패널 닫기 버튼 및 오버레이 이벤트
         const closePanelBtn = document.getElementById("closePanelBtn");
         const overlay = document.getElementById("overlay");
 
@@ -877,7 +997,6 @@ class TodayMatchManager {
 
         console.log("실시간 업데이트 리스너 설정");
 
-        // matches 컬렉션 변경 감지
         const unsubscribe = window.firebase.onSnapshot(
             window.firebase.collection(this.db, "matches"),
             (snapshot) => {
@@ -891,7 +1010,6 @@ class TodayMatchManager {
             }
         );
 
-        // 페이지 언로드 시 리스너 해제
         window.addEventListener('beforeunload', () => {
             if (unsubscribe) unsubscribe();
             if (this.chatUnsubscribe) this.chatUnsubscribe();
@@ -906,7 +1024,6 @@ const todayMatchManager = new TodayMatchManager();
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM 로드 완료 - TodayMatchManager 초기화");
     
-    // Firebase 초기화 대기 후 실행
     setTimeout(async () => {
         try {
             await todayMatchManager.initialize();
