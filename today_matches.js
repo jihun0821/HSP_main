@@ -415,13 +415,10 @@ class TodayMatchManager {
                     (match.homeTeam === homeTeam && match.awayTeam === awayTeam) ||
                     (match.homeTeam === awayTeam  && match.awayTeam === homeTeam);
 
-                // 결과가 확정된 경기만 포함
-                const hasResult =
-                    match.adminResult ||
-                    (match.homeScore !== undefined && match.homeScore !== null && match.homeScore !== '' &&
-                     match.awayScore !== undefined && match.awayScore !== null && match.awayScore !== '');
+                // status가 "finished"인 경기만 포함
+                const isFinished = match.status === "finished";
 
-                if (isH2H && hasResult) {
+                if (isH2H && isFinished) {
                     h2hMatches.push(match);
                 }
             });
@@ -489,26 +486,38 @@ class TodayMatchManager {
         const drawPct  = total ? Math.round((draws  / total) * 100) : 0;
         const lossPct  = total ? Math.round((losses / total) * 100) : 0;
 
-        // 경기 행 HTML 생성 헬퍼
+        // 경기 행 HTML 생성 헬퍼 - 홈팀/원정팀 결과를 각각 표시
         const matchRowHtml = (match) => {
-            const result      = this.getMatchResultForTeam(match, homeTeam);
-            const resultLabel = { win: '승', draw: '무', loss: '패' }[result] || '-';
-            const resultClass = { win: 'h2h-win', draw: 'h2h-draw', loss: 'h2h-loss' }[result] || '';
-            const scoreText   =
+            const homeResult = this.getMatchResultForTeam(match, match.homeTeam);
+            const awayResult = this.getMatchResultForTeam(match, match.awayTeam);
+
+            const badgeClass = (r) => ({ win: 'h2h-win', draw: 'h2h-draw', loss: 'h2h-loss' }[r] || '');
+            const badgeLabel = (r) => ({ win: '승', draw: '무', loss: '패' }[r] || '-');
+
+            const scoreText =
                 (match.homeScore !== undefined && match.homeScore !== '' &&
                  match.awayScore !== undefined && match.awayScore !== '')
                     ? `${match.homeScore} - ${match.awayScore}`
                     : '-';
 
+            // 현재 패널의 홈팀이면 굵게
+            const homeClass = match.homeTeam === homeTeam ? 'h2h-highlight' : '';
+            const awayClass = match.awayTeam === homeTeam ? 'h2h-highlight' : '';
+
             return `
                 <div class="h2h-match-row">
                     <span class="h2h-match-date">${match.date || ''}</span>
-                    <span class="h2h-match-teams">
-                        <span class="${match.homeTeam === homeTeam ? 'h2h-highlight' : ''}">${this.escapeHtml(match.homeTeam)}</span>
+                    <div class="h2h-match-body">
+                        <div class="h2h-team-block">
+                            <span class="h2h-result-badge ${badgeClass(homeResult)}">${badgeLabel(homeResult)}</span>
+                            <span class="h2h-team-name ${homeClass}">${this.escapeHtml(match.homeTeam)}</span>
+                        </div>
                         <span class="h2h-score">${scoreText}</span>
-                        <span class="${match.awayTeam === homeTeam ? 'h2h-highlight' : ''}">${this.escapeHtml(match.awayTeam)}</span>
-                    </span>
-                    <span class="h2h-result-badge ${resultClass}">${resultLabel}</span>
+                        <div class="h2h-team-block h2h-team-block--away">
+                            <span class="h2h-team-name ${awayClass}">${this.escapeHtml(match.awayTeam)}</span>
+                            <span class="h2h-result-badge ${badgeClass(awayResult)}">${badgeLabel(awayResult)}</span>
+                        </div>
+                    </div>
                 </div>
             `;
         };
