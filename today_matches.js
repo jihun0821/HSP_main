@@ -543,7 +543,7 @@ class TodayMatchManager {
                     <span class="h2h-label-draw">${drawPct}%</span>
                     <span class="h2h-label-loss">${lossPct}%</span>
                 </div>
-                <div class="h2h-total-count">총 ${total}경기 · ${homeTeam} ${wins}승 ${draws}무 ${losses}패</div>
+                <div class="h2h-total-count">총 ${total}경기 · ${wins}승 ${draws}무 ${losses}패</div>
             </div>
         `;
 
