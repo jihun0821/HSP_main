@@ -21,9 +21,9 @@
         `;
 
         const floors = {
-            'C100호대': ROOMS.filter(r => r.startsWith('C1')),
-            'C200호대': ROOMS.filter(r => r.startsWith('C2')),
-            'C300호대': ROOMS.filter(r => r.startsWith('C3')),
+            '1층': ROOMS.filter(r => r.startsWith('C1')),
+            '2층': ROOMS.filter(r => r.startsWith('C2')),
+            '3층': ROOMS.filter(r => r.startsWith('C3')),
         };
 
         let btnHTML = '';
