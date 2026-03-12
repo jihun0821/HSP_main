@@ -55,15 +55,35 @@
     flex-shrink: 0;
 }
 
-.h2h-match-teams {
+/* 홈팀 | 스코어 | 원정팀 을 가운데 정렬로 한 줄에 */
+.h2h-match-body {
     flex: 1;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 6px;
+}
+
+/* 팀명 + 뱃지 묶음 */
+.h2h-team-block {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end; /* 홈팀: 오른쪽 정렬 */
+}
+
+.h2h-team-block--away {
+    justify-content: flex-start; /* 원정팀: 왼쪽 정렬 */
+}
+
+.h2h-team-name {
     font-size: 13px;
     color: #ccc;
-    justify-content: center;
-    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;
 }
 
 .h2h-highlight {
@@ -78,8 +98,9 @@
     background: rgba(255,255,255,0.08);
     border-radius: 6px;
     padding: 2px 8px;
-    min-width: 44px;
+    min-width: 48px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 /* 결과 뱃지 */
