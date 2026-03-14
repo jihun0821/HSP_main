@@ -2,11 +2,11 @@
 
 let statsLeaderboardData = {
     goals: [
-        { rank: 1, name: "---", value: 0, unit: "골" },
-        { rank: 2, name: "---", value: 0, unit: "골" },
-        { rank: 3, name: "---", value: 0, unit: "골" },
-        { rank: 4, name: "---", value: 0, unit: "골" },
-        { rank: 5, name: "---", value: 0, unit: "골" }
+        { rank: 1, name: "김한솔", value: 17, unit: "골" },
+        { rank: 2, name: "문지훈", value: 13, unit: "골" },
+        { rank: 3, name: "성준용", value: 13, unit: "골" },
+        { rank: 4, name: "조성익", value: 12, unit: "골" },
+        { rank: 5, name: "박석현", value: 11, unit: "골" }
     ],
     assists: [
         { rank: 1, name: "---", value: 0, unit: "도움" },
