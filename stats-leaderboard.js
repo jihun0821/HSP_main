@@ -2,8 +2,18 @@
 
 let statsLeaderboardData = {
     goals: [
+        { rank: 1, name: "---", value: 0, unit: "골" },
+        { rank: 2, name: "---", value: 0, unit: "골" },
+        { rank: 3, name: "---", value: 0, unit: "골" },
+        { rank: 4, name: "---", value: 0, unit: "골" },
+        { rank: 5, name: "---", value: 0, unit: "골" }
     ],
     assists: [
+        { rank: 1, name: "---", value: 0, unit: "도움" },
+        { rank: 2, name: "---", value: 0, unit: "도움" },
+        { rank: 3, name: "---", value: 0, unit: "도움" },
+        { rank: 4, name: "---", value: 0, unit: "도움" },
+        { rank: 5, name: "---", value: 0, unit: "도움" }
     ]
 };
 
