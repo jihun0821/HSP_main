@@ -30,6 +30,8 @@ function initializeFirebase() {
         window.db = db;
         window.auth = auth;
         window.storage = storage;
+
+        window.dispatchEvent(new CustomEvent('firebase-ready'));
         
         console.log("Firebase 초기화 완료");
         return true;
