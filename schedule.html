@@ -171,7 +171,358 @@
                 </div>
             </div>
         </div>
-    </div><!-- /.main-container -->
+    </div>
+
+    <!-- 경기 상세 패널 -->
+    <div class="match-details-panel" id="matchDetailsPanel">
+        <div class="panel-header">
+            <button class="close-panel" id="closePanelBtn">×</button>
+            <h2 id="panelTitle">경기 상세 정보</h2>
+        </div>
+        <div class="panel-content" id="panelContent">
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- 관리자용: 경기 추가 모달 -->
+    <div id="addMatchModal" class="auth-modal" style="display:none;">
+      <div class="auth-modal-content" style="max-width:640px; box-sizing:border-box; padding:16px; max-height:80vh; overflow-y:auto;">
+        <span class="auth-modal-close" id="closeAddMatchModal">&times;</span>
+        <h2 style="margin-bottom: 12px;">경기 추가 (관리자)</h2>
+        <div class="auth-form" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <label style="grid-column: 1 / 3;">문서 ID (선택) <small style="color:#666;">(비워두면 자동생성)</small></label>
+          <input id="addMatchId" type="text" placeholder="예: 18 (문자열 가능)" style="grid-column: 1 / 3;" />
+
+          <label>날짜</label>
+          <input id="addMatchDate" type="date" />
+          <label>시간</label>
+          <input id="addMatchTime" type="time" />
+
+          <label>홈팀</label>
+          <input id="addMatchHome" type="text" placeholder="홈팀 이름" />
+          <label>원정팀</label>
+          <input id="addMatchAway" type="text" placeholder="원정팀 이름" />
+
+          <label>리그</label>
+          <input id="addMatchLeague" type="text" placeholder="리그명" />
+          <label>상태</label>
+          <select id="addMatchStatus">
+            <option value="scheduled">scheduled</option>
+            <option value="finished">finished</option>
+            <option value="postponed">postponed</option>
+          </select>
+
+          <label>홈점수</label>
+          <input id="addMatchHomeScore" type="number" min="0" value="0" />
+          <label>원정점수</label>
+          <input id="addMatchAwayScore" type="number" min="0" value="0" />
+
+          <label style="grid-column: 1 / 3; margin-top:6px;">홈팀 라인업 (3학년,2학년,1학년 각각 콤마로 구분)</label>
+          <input id="addHomeThird" type="text" placeholder="3학년: 선수A, 선수B" />
+          <input id="addHomeSecond" type="text" placeholder="2학년: 선수C, 선수D" />
+          <input id="addHomeFirst" type="text" placeholder="1학년: 선수E, 선수F" />
+
+          <label style="grid-column: 1 / 3; margin-top:6px;">원정팀 라인업 (콤마로 구분)</label>
+          <input id="addAwayThird" type="text" placeholder="3학년: ..." />
+          <input id="addAwaySecond" type="text" placeholder="2학년: ..." />
+          <input id="addAwayFirst" type="text" placeholder="1학년: ..." />
+
+          <label>홈 점유율(%)</label>
+          <input id="addHomePoss" type="number" min="0" max="100" value="50" />
+          <label>원정 점유율(%)</label>
+          <input id="addAwayPoss" type="number" min="0" max="100" value="50" />
+
+          <label>홈 슈팅</label>
+          <input id="addHomeShots" type="number" min="0" value="0" />
+          <label>원정 슈팅</label>
+          <input id="addAwayShots" type="number" min="0" value="0" />
+
+          <label style="grid-column: 1 / 3; margin-top:6px;">이벤트 (선택)</label>
+          <textarea id="addMatchEvents" placeholder="각 이벤트를 한 줄씩 입력 (예: 12' 홈팀 골: 선수A)" style="grid-column:1 / 3; height:80px;"></textarea>
+
+          <div style="grid-column: 1 / 3; display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+            <button id="submitAddMatchBtn" class="auth-btn" style="min-width:120px;">추가</button>
+            <button id="cancelAddMatchBtn" class="auth-btn" style="background:#ccc; min-width:120px;">취소</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 관리자용: 경기 수정 모달 -->
+    <div id="editMatchModal" class="auth-modal" style="display:none;">
+      <div class="auth-modal-content" style="max-width:560px; box-sizing:border-box; padding:24px; max-height:85vh; overflow-y:auto;">
+        <span class="auth-modal-close" id="closeEditMatchModal">&times;</span>
+        <h2 style="margin-bottom:6px;">경기 수정 <span style="font-size:14px; font-weight:400; color:#666;">(관리자)</span></h2>
+        <p id="editMatchSubtitle" style="color:#27AE60; font-size:13px; margin-bottom:20px; word-break:break-all;"></p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+
+          <!-- 상태 / 날짜 / 시간 -->
+          <div style="grid-column:1/3; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+            <div>
+              <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">상태</label>
+              <select id="editMatchStatus" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+                <option value="scheduled">scheduled</option>
+                <option value="live">live</option>
+                <option value="finished">finished</option>
+                <option value="postponed">postponed</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">날짜</label>
+              <input id="editMatchDate" type="date" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">시간</label>
+              <input id="editMatchTime" type="time" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+            </div>
+          </div>
+
+          <!-- 팀명 -->
+          <div>
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">홈팀</label>
+            <input id="editMatchHome" type="text" placeholder="홈팀 이름" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">원정팀</label>
+            <input id="editMatchAway" type="text" placeholder="원정팀 이름" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+          </div>
+
+          <!-- 스코어 -->
+          <div>
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">홈 점수</label>
+            <input id="editMatchHomeScore" type="number" min="0" value="0" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">원정 점수</label>
+            <input id="editMatchAwayScore" type="number" min="0" value="0" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+          </div>
+
+          <!-- 리그 -->
+          <div style="grid-column:1/3;">
+            <label style="font-size:12px; color:#888; display:block; margin-bottom:4px;">리그</label>
+            <input id="editMatchLeague" type="text" placeholder="리그명" style="width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; box-sizing:border-box;" />
+          </div>
+
+          <!-- 홈팀 라인업 -->
+          <div style="grid-column:1/3; border-top:1px solid #eee; padding-top:14px; margin-top:4px;">
+            <div style="font-size:13px; font-weight:600; color:#333; margin-bottom:10px;">🏠 홈팀 라인업 <span style="font-weight:400; color:#999; font-size:12px;">(콤마로 구분)</span></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">3학년</label>
+                <input id="editHomeThird" type="text" placeholder="선수A, 선수B" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">2학년</label>
+                <input id="editHomeSecond" type="text" placeholder="선수C, 선수D" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">1학년</label>
+                <input id="editHomeFirst" type="text" placeholder="선수E, 선수F" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 원정팀 라인업 -->
+          <div style="grid-column:1/3;">
+            <div style="font-size:13px; font-weight:600; color:#333; margin-bottom:10px;">✈️ 원정팀 라인업 <span style="font-weight:400; color:#999; font-size:12px;">(콤마로 구분)</span></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">3학년</label>
+                <input id="editAwayThird" type="text" placeholder="선수A, 선수B" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">2학년</label>
+                <input id="editAwaySecond" type="text" placeholder="선수C, 선수D" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">1학년</label>
+                <input id="editAwayFirst" type="text" placeholder="선수E, 선수F" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 스탯 -->
+          <div style="grid-column:1/3; border-top:1px solid #eee; padding-top:14px; margin-top:4px;">
+            <div style="font-size:13px; font-weight:600; color:#333; margin-bottom:10px;">📊 경기 스탯</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">홈 점유율(%)</label>
+                <input id="editHomePoss" type="number" min="0" max="100" value="50" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">원정 점유율(%)</label>
+                <input id="editAwayPoss" type="number" min="0" max="100" value="50" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">홈 슈팅</label>
+                <input id="editHomeShots" type="number" min="0" value="0" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+              <div>
+                <label style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">원정 슈팅</label>
+                <input id="editAwayShots" type="number" min="0" value="0" style="width:100%; padding:7px 9px; border:1px solid #eee; border-radius:5px; font-size:13px; box-sizing:border-box;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 이벤트 -->
+          <div style="grid-column:1/3; border-top:1px solid #eee; padding-top:14px; margin-top:4px;">
+            <label style="font-size:13px; font-weight:600; color:#333; display:block; margin-bottom:6px;">📝 이벤트 <span style="font-weight:400; color:#999; font-size:12px;">(한 줄씩)</span></label>
+            <textarea id="editMatchEvents" placeholder="12' 홈팀 골: 선수A&#10;34' 원정팀 골: 선수B" style="width:100%; height:80px; padding:8px 10px; border:1px solid #eee; border-radius:6px; font-size:13px; box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
+          </div>
+
+          <!-- 버튼 -->
+          <div style="grid-column:1/3; display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button id="saveEditMatchBtn" style="
+              padding:10px 28px;
+              background:#27AE60;
+              color:#fff;
+              border:none;
+              border-radius:8px;
+              font-size:14px;
+              font-weight:600;
+              cursor:pointer;
+            ">저장</button>
+            <button id="cancelEditMatchBtn" style="
+              padding:10px 28px;
+              background:#f0f0f0;
+              color:#555;
+              border:none;
+              border-radius:8px;
+              font-size:14px;
+              cursor:pointer;
+            ">취소</button>
+          </div>
+
+          <div id="editMatchMsg" style="grid-column:1/3; text-align:center; font-size:13px; padding:4px 0; display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="auth-modal" style="display: none;">
+       <div class="auth-modal-content">
+         <span class="auth-modal-close" id="closeLoginModal">&times;</span>
+         <h2 style="margin-bottom: 24px;">로그인</h2>
+         <div class="auth-form">
+           <input id="loginEmail" type="email" placeholder="아이디(이메일)" autocomplete="username" name="email" />
+           <input id="loginPassword" type="password" placeholder="비밀번호" autocomplete="current-password" name="password" />
+           <button id="doLogin" class="auth-btn login-btn" style="width: 100%; margin: 12px 0;">로그인</button>
+         </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+          <a href="#" id="openSignupLink" style="color: #27AE60; font-size: 15px; text-decoration: underline;">가입하기</a>
+          <a href="#" id="openPasswordResetLink" style="color: #27AE60; font-size: 15px;">비밀번호를 잊어버리셨나요?</a>
+        </div>
+       </div>
+    </div>
+
+    <!-- 회원가입 모달 -->
+    <div id="signupModal" class="auth-modal" style="display: none;">
+       <div class="auth-modal-content">
+         <span class="auth-modal-close" id="closeSignupModal">&times;</span>
+         <h2 style="margin-bottom: 24px;">회원가입</h2>
+         <div class="auth-form">
+           <input id="signupEmail" type="email" placeholder="이메일 (@hanilgo.cnehs.kr)" name="email" />
+           <input id="signupPassword" type="password" placeholder="비밀번호 (6자 이상)" name="password" />
+           <button id="openProfileModalBtn" class="auth-btn signup-btn" style="width: 100%; margin: 12px 0;">다음</button>
+         </div>
+         <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+           <a href="#" id="backToLoginLink" style="color: #27AE60; font-size: 15px; text-decoration: underline;">로그인으로 돌아가기</a>
+         </div>
+       </div>
+    </div>
+
+    <!-- 프로필 모달 (회원가입 완료용) -->
+    <div id="profileModal" class="auth-modal" style="display: none;">
+        <div class="auth-modal-content">
+            <span class="auth-modal-close" id="closeProfileModal">&times;</span>
+            <h2 style="margin-bottom: 24px;">프로필 설정</h2>
+            <div class="auth-form">
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    닉네임을 설정해주세요. (2-20자)
+                </p>
+                <input id="nickname" type="text" placeholder="닉네임 입력" maxlength="20" />
+                
+                <div class="modal-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="signupSaveProfileBtn" class="auth-btn" style="flex: 1;">저장하고 가입</button>
+                    <button id="checkVerificationBtn" class="auth-btn" style="flex: 1; display: none;">이메일 인증 확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 비밀번호 재설정 모달 -->
+    <div id="passwordResetModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-content">
+        <span class="auth-modal-close" id="closePasswordResetModal">&times;</span>
+        <h2 style="margin-bottom: 24px;">비밀번호 재설정</h2>
+        <div class="auth-form" id="passwordResetForm">
+          <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+            가입할 때 사용한 이메일 주소를 입력하면 비밀번호 재설정 링크를 보내드립니다.
+          </p>
+          <input id="resetEmail" type="email" placeholder="이메일 주소 입력" name="resetEmail" />
+          <button id="sendResetEmailBtn" class="auth-btn" style="width: 100%; margin: 12px 0;">
+            비밀번호 재설정 이메일 보내기
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+          <a href="#" id="backToLoginFromReset" style="color: #27AE60; font-size: 15px; text-decoration: underline;">로그인으로 돌아가기</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 프로필 편집 모달 -->
+    <div id="profileEditModal" class="profile-edit-modal" style="display: none;">
+        <div class="profile-edit-modal-content">
+            <span class="profile-edit-modal-close" id="closeProfileEditModal">&times;</span>
+            <h2>프로필 편집</h2>
+            
+            <div class="current-profile-info">
+                <div class="profile-image-container">
+                    <img id="currentProfileImage" src="" alt="현재 프로필 이미지">
+                    <div class="image-overlay">
+                        <button id="changeImageBtn" class="change-image-btn">사진 변경</button>
+                    </div>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="current-nickname" id="currentNickname"></div>
+                <div class="current-email" id="currentEmail"></div>
+            </div>
+            
+            <div class="edit-form">
+                <label for="newNickname">새 닉네임</label>
+                <input 
+                    id="newNickname" 
+                    type="text" 
+                    placeholder="새 닉네임 입력 (2-20자)" 
+                    maxlength="20"
+                />
+                
+                <div id="imagePreviewContainer" style="display: none;">
+                    <label>새 프로필 사진 미리보기:</label>
+                    <img id="imagePreview" src="" alt="미리보기" class="image-preview">
+                    <button id="cancelImageBtn" class="cancel-image-btn">이미지 취소</button>
+                </div>
+                
+                <div class="edit-buttons">
+                    <button id="saveProfileBtn" class="edit-btn save-btn">저장</button>
+                    <button id="cancelEditBtn" class="edit-btn cancel-btn">취소</button>
+                </div>
+                
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <span class="progress-text">업로드 중...</span>
+                </div>
+                
+                <div id="editSuccessMessage" class="success-message" style="display: none;">
+                    프로필이 성공적으로 변경되었습니다!
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="auth.js"></script>
     <script src="modal-ui.js"></script>
