@@ -132,7 +132,7 @@
       if (!titleEl) return;
       const rawText = titleEl.textContent || '';
       const compact = rawText.replace(/\s+/g, ' ').trim();
-      if (compact.indexOf('경기일정') !== -1) {
+      if (compact.indexOf('다가오는 경기') !== -1) {
         container = card.querySelector('.list-items');
       }
     });
@@ -193,7 +193,7 @@
     let container = null;
     listCards.forEach(card => {
       const title = card.querySelector('.list-title');
-      if (title && (title.textContent || '').replace(/\s+/g,' ').trim().indexOf('경기일정') !== -1) {
+      if (title && (title.textContent || '').replace(/\s+/g,' ').trim().indexOf('다가오는 경기') !== -1) {
         container = card.querySelector('.list-items');
       }
     });
