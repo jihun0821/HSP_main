@@ -1,13 +1,7 @@
 // personal-stats.js
 // ─────────────────────────────────────────────────────────────────────────────
-// 개인 기록 카드 (사이드바 "게시판" 영역을 대체)
 // Firestore 컬렉션: personal_stats / 문서 ID: uid
 // 필드: prediction_count | correct_count | max_streak | best_rank | updated_at
-//
-// 기존 파일 무수정 원칙
-//  - today_matches.js의 saveVoteToFirestore / setMatchResult 를
-//    파일 로드 완료 후 패치(monkey-patch)하여 후킹
-//  - auth.js / modal-ui.js 등 다른 파일과 전역 변수 충돌 없음
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -224,7 +218,7 @@
 
     if (!isLoggedIn) {
       card.innerHTML = `
-        <h4 class="list-title">내 기록</h4>
+        <h4 class="list-title">&nbsp;&nbsp;내 기록</h4>
         <ul class="list-items">
           <li class="list-item" style="text-align:center; color:#aaa; padding:14px 0; font-size:13px;">
             로그인 후 확인할 수 있습니다.
