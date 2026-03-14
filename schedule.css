@@ -77,7 +77,7 @@
 }
 
 .match-card.anchor::before {
-    content: '★ 가장 가까운 경기';
+    content: '★ 다가오는 경기';
     position: absolute;
     top: -11px;
     left: 14px;
