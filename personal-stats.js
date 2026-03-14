@@ -234,11 +234,11 @@
     }
 
     const rows = [
-      { label: ' 승부예측 참여',  value: (stats.prediction_count || 0) + '회' },
-      { label: ' 적중 횟수',      value: (stats.correct_count    || 0) + '회' },
-      { label: ' 적중률',         value: calcAccuracy(stats.correct_count, stats.prediction_count) },
-      { label: ' 최대 연속 적중', value: (stats.max_streak        || 0) + '회' },
-      { label: ' 내 최고 순위',   value: stats.best_rank != null ? stats.best_rank + '위' : '-' },
+      { label: '&nbsp; 승부예측 참여',  value: (stats.prediction_count || 0) + '회' },
+      { label: '&nbsp; 적중 횟수',      value: (stats.correct_count    || 0) + '회' },
+      { label: '&nbsp 적중률',         value: calcAccuracy(stats.correct_count, stats.prediction_count) },
+      { label: '&nbsp; 최대 연속 적중', value: (stats.max_streak        || 0) + '회' },
+      { label: '&nbsp; 내 최고 순위',   value: stats.best_rank != null ? stats.best_rank + '위' : '-' },
     ];
 
     const liHTML = rows.map(({ label, value }) => `
