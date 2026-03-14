@@ -1,6 +1,4 @@
-/* ─────────────────────────────────────────────
-   상대전적 (H2H) 탭 스타일
-   ───────────────────────────────────────────── */
+/* 상대전적 탭 스타일 */
 
 /* 컨테이너 */
 .h2h-container {
@@ -34,7 +32,7 @@
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-/* ─── 경기 행 ─── */
+/* 경기 행  */
 .h2h-match-row {
     display: flex;
     align-items: center;
@@ -55,7 +53,6 @@
     flex-shrink: 0;
 }
 
-/* 홈팀 | 스코어 | 원정팀 을 가운데 정렬로 한 줄에 */
 .h2h-match-body {
     flex: 1;
     display: flex;
@@ -64,17 +61,16 @@
     gap: 6px;
 }
 
-/* 팀명 + 뱃지 묶음 */
 .h2h-team-block {
     display: flex;
     align-items: center;
     gap: 6px;
     flex: 1;
-    justify-content: flex-end; /* 홈팀: 오른쪽 정렬 */
+    justify-content: flex-end; 
 }
 
 .h2h-team-block--away {
-    justify-content: flex-start; /* 원정팀: 왼쪽 정렬 */
+    justify-content: flex-start; 
 }
 
 .h2h-team-name {
@@ -85,8 +81,6 @@
     text-overflow: ellipsis;
     max-width: 90px;
 }
-
-
 
 .h2h-score {
     font-size: 13px;
@@ -115,7 +109,7 @@
 .h2h-draw { background: rgba(250, 204, 21, 0.15);  color: #facc15; }
 .h2h-loss { background: rgba(248, 113, 113, 0.18); color: #f87171; }
 
-/* ─── 역대 전적 그래프 ─── */
+/* 역대 전적 그래프 */
 .h2h-stats-graph {
     background: rgba(255,255,255,0.04);
     border-radius: 12px;
@@ -133,8 +127,8 @@
     color: #fff;
 }
 
-.h2h-team-a { color: #60a5fa; }  /* 홈팀 - 파란 계열 */
-.h2h-team-b { color: #f87171; }  /* 원정팀 - 빨간 계열 */
+.h2h-team-a { color: #60a5fa; }  /* 파란색 */
+.h2h-team-b { color: #f87171; }  /* 빨간색 */
 
 /* 승/무/패 숫자 */
 .h2h-counts-row {
@@ -182,7 +176,7 @@
     margin-top: 2px;
 }
 
-/* ─── 전체 목록 토글 ─── */
+/* 전체 목록 토글 */
 .h2h-all-toggle {
     font-size: 12px;
     color: #888;
@@ -199,7 +193,7 @@
     color: #ccc;
 }
 
-/* 전체 목록은 기본적으로 숨김, .open 시 표시 */
+/* 전체 목록은 기본적으로 숨기나 .open 시 표시 */
 .h2h-all-list {
     max-height: 0;
     overflow: hidden;
