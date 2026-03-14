@@ -1,0 +1,267 @@
+/* schedule.css — 경기 일정 페이지 전용 스타일 */
+
+/* ─── 로딩 ─────────────────────────────────── */
+.schedule-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 0;
+    color: #888;
+    font-size: 14px;
+}
+
+.loading-spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #27AE60;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.schedule-empty {
+    padding: 32px 0;
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* ─── 경기 목록 ─────────────────────────────── */
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 경기 카드 */
+.match-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    gap: 12px;
+}
+
+.match-card:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-color: #c8e6c9;
+}
+
+/* 오늘과 가장 가까운 경기 — anchor 카드 */
+.match-card.anchor {
+    border: 2px solid #27AE60;
+    background: #f0faf3;
+    box-shadow: 0 2px 12px rgba(39,174,96,0.13);
+    position: relative;
+}
+
+.match-card.anchor::before {
+    content: '★ 가장 가까운 경기';
+    position: absolute;
+    top: -11px;
+    left: 14px;
+    background: #27AE60;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* 날짜 블록 */
+.match-date-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 48px;
+}
+
+.match-month-day {
+    font-size: 15px;
+    font-weight: 700;
+    color: #222;
+    line-height: 1.2;
+}
+
+.match-weekday {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.match-time-text {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 1px;
+}
+
+/* 팀 영역 */
+.match-teams-block {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.team-name-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+.score-block {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #27AE60;
+}
+
+.score-dash {
+    font-size: 13px;
+    color: #ccc;
+    font-weight: 400;
+}
+
+/* 상태 배지 */
+.match-status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.badge-scheduled {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-finished {
+    background: #f5f5f5;
+    color: #888;
+}
+
+.badge-live {
+    background: #ffebee;
+    color: #e53935;
+    animation: pulse-badge 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+}
+
+.badge-postponed {
+    background: #fff8e1;
+    color: #f9a825;
+}
+
+/* 리그 태그 */
+.match-league-tag {
+    font-size: 11px;
+    color: #aaa;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+}
+
+/* ─── 페이지네이션 ───────────────────────────── */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    color: #444;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f0faf3;
+    border-color: #27AE60;
+    color: #27AE60;
+}
+
+.page-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.page-num-btn {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e0e0e0;
+    border-radius: 7px;
+    background: #fff;
+    color: #444;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.page-num-btn:hover {
+    background: #f0faf3;
+    border-color: #27AE60;
+    color: #27AE60;
+}
+
+.page-num-btn.active {
+    background: #27AE60;
+    border-color: #27AE60;
+    color: #fff;
+    font-weight: 700;
+    cursor: default;
+}
+
+/* 구분선 (날짜 그룹) */
+.date-divider {
+    font-size: 12px;
+    color: #bbb;
+    padding: 4px 0 2px 4px;
+    letter-spacing: 0.3px;
+}
