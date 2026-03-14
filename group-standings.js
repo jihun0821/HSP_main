@@ -219,7 +219,7 @@ class GroupStandingsManager {
                 <li class="team-item">
                     <span class="team-rank">${i + 1}</span>
                     <span class="team-name">${team.name || "-"}</span>
-                    <span class="team-points">${team.points ?? 0}점</span>
+                    <span class="team-points">${team.points ?? 0}</span>
                 </li>
             `).join("");
 
