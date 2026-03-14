@@ -137,7 +137,7 @@
     box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
 }
 
-/* 네비게이션 링크 내 이미지들 공통 스타일 */
+/* 네비게이션 링크 내 이미지 스타일 */
 .nav-link img {
     width: 20px;
     height: 20px;
@@ -147,7 +147,7 @@
     object-fit: contain;
 }
 
-/* 개별 이미지 클래스별 스타일 */
+/* 개별 이미지 스타일 */
 .caffe-img {
     width: 18px;
     height: 18px;
@@ -186,7 +186,7 @@
     margin-top: 2rem;
 }
 
-/* 조별 순위표 */
+/* 조별 순위표(개선 필요) */
 .groups-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
