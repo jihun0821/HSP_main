@@ -98,7 +98,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 메인 화면 승부예측 버튼 그룹 (인라인) */
+/* 메인 화면 승부예측 버튼 그룹(얜 인라인이나까 아래랑 헷갈리지 말자)  */
 .prediction-btns-inline {
     display: flex;
     justify-content: center;
@@ -211,7 +211,7 @@
     background: #e74c3c;
 }
 
-/* ============== 경기 상세 정보 헤더 ============== */
+/* 경기 상세 정보 영역*/
 .match-detail-header {
     display: flex;
     justify-content: space-between;
@@ -223,7 +223,7 @@
     font-size: 14px;
 }
 
-/* ============== 경기 스코어 표시 ============== */
+/* 경기 스코어 표시 영역*/
 .match-score {
     display: flex;
     justify-content: space-between;
@@ -281,12 +281,12 @@
     justify-content: center;
     gap: 2rem;
     margin: 2rem 0;
-    width: 100%;         /* 부모 컨테이너 전체 너비로 설정 */
+    width: 100%;         
     box-sizing: border-box;
 }
 
 .prediction-btn {
-    flex: 1;                    /* 각 버튼이 동일한 너비로 늘어남 */
+    flex: 1;                    
     height: 56px;
     font-size: 1.5rem;
     font-weight: bold;
@@ -301,8 +301,8 @@
         background 0.2s,
         box-shadow 0.2s;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    min-width: 200px;            /* 최소 너비 */
-    max-width: 400px;           /* 최대 너비 (원하면 제거 가능) */
+    min-width: 200px;            
+    max-width: 400px;          
 }
 
 .prediction-btn.home-win {
@@ -330,7 +330,7 @@
     box-shadow: 0 2px 12px rgba(235,87,87,0.13);
 }
 
-/* ============== 경기 통계 ============== */
+/* 경기 통계 칸*/
 .match-stats {
     margin: 2rem 0;
 }
@@ -388,7 +388,7 @@
     font-size: 14px;
 }
 
-/* ============== 탭 스타일 ============== */
+/* 탭 스타일 */
 .tab-container {
     margin-top: 2rem;
 }
@@ -429,7 +429,7 @@
     display: block;
 }
 
-/* ============== 이벤트 타임라인 ============== */
+/* 이벤트 타임라인(이거 쓰나? 기억이 없네. 나중에 event 관련된 js코드 있나 살펴보기) */
 .event {
     display: flex;
     align-items: center;
@@ -473,7 +473,7 @@
     font-size: 14px;
 }
 
-/* ============== 라인업 스타일 ============== */
+/* 라인업 스타일 */
 .lineups-container {
     margin-top: 1.5rem;
 }
@@ -546,7 +546,7 @@
     box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
 }
 
-/* ============== 채팅 =============== */
+/* 채팅 영역 */
 
 .chat-messages {
     min-height: 150px;
@@ -693,7 +693,7 @@
     text-align: right;
 }
 
-/* ============== 모달 기본 스타일 ============== */
+/* 기본 모달 스타일 */
 .auth-modal {
     position: fixed;
     top: 0;
@@ -810,7 +810,7 @@
     transform: translateY(0);
 }
 
-/* ============== 프로필 편집 모달 ============== */
+/* 프로필 편집 모달 스타일 */
 .profile-edit-modal {
     position: fixed;
     top: 0;
@@ -1080,7 +1080,7 @@
     }
 }
 
-/* ============== 반응형 디자인 ============== */
+/* 반응형 디자인(아직 핸드폰은 미지원) */
 @media (max-width: 768px) {
     .auth-modal-content,
     .profile-edit-modal-content {
