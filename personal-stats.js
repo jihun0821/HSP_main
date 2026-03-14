@@ -243,7 +243,7 @@
 
     card.innerHTML = `
       <h4 class="list-title" style="display:flex; align-items:center; justify-content:space-between;">
-        내 기록
+        &nbsp;&nbsp;&nbsp;내 기록
         <button id="psRefreshBtn" title="새로고침"
           style="background:none; border:none; cursor:pointer; font-size:16px; color:#27AE60; padding:0; line-height:1;">↺</button>
       </h4>
