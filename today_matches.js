@@ -213,9 +213,41 @@ class TodayMatchManager {
                 console.error("관리자 권한 확인 실패:", error);
             }
         }
+
+        // 관리자 수정 버튼 (상태 무관하게 항상 표시)
+        const adminEditBtn = isAdmin ? `
+            <button
+                class="admin-edit-match-btn"
+                onclick="todayMatchManager.openEditMatchModal('${matchId}')"
+                style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    gap:6px;
+                    margin: 0 auto 14px auto;
+                    padding: 8px 22px;
+                    background: #1a1a2e;
+                    color: #fff;
+                    border: 1.5px solid #27AE60;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    letter-spacing: 0.3px;
+                    transition: background 0.2s, transform 0.1s;
+                "
+                onmouseover="this.style.background='#27AE60'"
+                onmouseout="this.style.background='#1a1a2e'"
+                onmousedown="this.style.transform='scale(0.97)'"
+                onmouseup="this.style.transform='scale(1)'"
+            >
+                ✏️ 경기 수정 (관리자)
+            </button>
+        ` : '';
         
         if (matchDetails.status === "finished" && isAdmin && !matchDetails.adminResult) {
             predictionHtml = `
+                ${adminEditBtn}
                 <h3>경기 결과 설정 (관리자)</h3>
                 <div class="admin-result-btns">
                     <button class="admin-result-btn home-win" onclick="todayMatchManager.setMatchResult('${matchId}', 'homeWin')">홈팀 승</button>
@@ -232,14 +264,16 @@ class TodayMatchManager {
             }[matchDetails.adminResult] || '결과 미정';
             
             predictionHtml = `
+                ${adminEditBtn}
                 <h3>경기 결과: ${resultText}</h3>
                 <h3>승부예측 결과</h3><div id="votingStats"></div>
             `;
         } else if (matchDetails.status === "scheduled") {
             if (!isLoggedIn || userVoted) {
-                predictionHtml = `<h3>승부예측 결과</h3><div id="votingStats"></div>`;
+                predictionHtml = `${adminEditBtn}<h3>승부예측 결과</h3><div id="votingStats"></div>`;
             } else {
                 predictionHtml = `
+                    ${adminEditBtn}
                     <h3>승부예측</h3>
                     <div class="prediction-btns">
                         <button class="prediction-btn home-win" data-vote="homeWin">1</button>
@@ -248,7 +282,7 @@ class TodayMatchManager {
                     </div>`;
             }
         } else {
-            predictionHtml = `<h3>승부예측 결과</h3><div id="votingStats"></div>`;
+            predictionHtml = `${adminEditBtn}<h3>승부예측 결과</h3><div id="votingStats"></div>`;
         }
 
         panelContent.innerHTML = `
@@ -367,9 +401,7 @@ class TodayMatchManager {
         }
     }
 
-    // ─────────────────────────────────────────────
     // 패널 탭 렌더링 (라인업 / 상대전적 / 채팅)
-    // ─────────────────────────────────────────────
     async renderPanelTabs(matchDetails, matchId) {
         const lineups = await this.getMatchLineups(matchDetails);
         const h2hHtml = await this.renderH2HContent(matchDetails.homeTeam, matchDetails.awayTeam);
@@ -396,10 +428,7 @@ class TodayMatchManager {
         `;
     }
 
-    // ─────────────────────────────────────────────
     // 상대전적: Firestore에서 두 팀 간 모든 경기 조회
-    // home/away 순서 무관하게 필터링, 결과 있는 경기만 포함
-    // ─────────────────────────────────────────────
     async getH2HMatches(homeTeam, awayTeam) {
         try {
             const querySnapshot = await window.firebase.getDocs(
@@ -410,12 +439,10 @@ class TodayMatchManager {
             querySnapshot.forEach((doc) => {
                 const match = { id: doc.id, ...doc.data() };
 
-                // 두 팀이 맞붙은 경기인지 (홈/원정 순서 무관)
                 const isH2H =
                     (match.homeTeam === homeTeam && match.awayTeam === awayTeam) ||
                     (match.homeTeam === awayTeam  && match.awayTeam === homeTeam);
 
-                // status가 "finished"인 경기만 포함
                 const isFinished = match.status === "finished";
 
                 if (isH2H && isFinished) {
@@ -423,7 +450,6 @@ class TodayMatchManager {
                 }
             });
 
-            // 최신 날짜 순으로 정렬
             h2hMatches.sort((a, b) => {
                 const da = this.normalizeDate(a.date || '');
                 const db_ = this.normalizeDate(b.date || '');
@@ -437,18 +463,15 @@ class TodayMatchManager {
         }
     }
 
-    // 특정 팀 기준으로 경기 결과 반환 ('win' | 'draw' | 'loss' | null)
     getMatchResultForTeam(match, teamName) {
         const isHome = match.homeTeam === teamName;
 
-        // adminResult 우선
         if (match.adminResult) {
             if (match.adminResult === 'draw') return 'draw';
             if (match.adminResult === 'homeWin') return isHome ? 'win' : 'loss';
             if (match.adminResult === 'awayWin') return isHome ? 'loss' : 'win';
         }
 
-        // 점수로 판별
         const hs = parseInt(match.homeScore);
         const as_ = parseInt(match.awayScore);
         if (isNaN(hs) || isNaN(as_)) return null;
@@ -458,7 +481,6 @@ class TodayMatchManager {
         return isHome ? 'loss' : 'win';
     }
 
-    // 상대전적 탭 전체 HTML 생성
     async renderH2HContent(homeTeam, awayTeam) {
         const allMatches = await this.getH2HMatches(homeTeam, awayTeam);
 
@@ -472,7 +494,6 @@ class TodayMatchManager {
             `;
         }
 
-        // 홈팀 기준 전체 승/무/패 집계
         let wins = 0, draws = 0, losses = 0;
         allMatches.forEach(match => {
             const result = this.getMatchResultForTeam(match, homeTeam);
@@ -486,7 +507,6 @@ class TodayMatchManager {
         const drawPct  = total ? Math.round((draws  / total) * 100) : 0;
         const lossPct  = total ? Math.round((losses / total) * 100) : 0;
 
-        // 경기 행 HTML 생성 헬퍼 - 홈팀/원정팀 결과를 각각 표시
         const matchRowHtml = (match) => {
             const homeResult = this.getMatchResultForTeam(match, match.homeTeam);
             const awayResult = this.getMatchResultForTeam(match, match.awayTeam);
@@ -518,10 +538,8 @@ class TodayMatchManager {
             `;
         };
 
-        // 최근 5경기
         const recent5Html = allMatches.slice(0, 5).map(matchRowHtml).join('');
 
-        // 역대 전적 막대 그래프
         const statsGraphHtml = `
             <div class="h2h-stats-graph">
                 <div class="h2h-teams-label">
@@ -547,7 +565,6 @@ class TodayMatchManager {
             </div>
         `;
 
-        // 역대 전체 경기 목록
         const allMatchesHtml = allMatches.map(matchRowHtml).join('');
 
         return `
@@ -566,7 +583,6 @@ class TodayMatchManager {
         `;
     }
 
-    // HTML 이스케이프
     escapeHtml(text) {
         if (!text) return "";
         return text.replace(/[&<>"'`]/g, s => ({
@@ -579,7 +595,6 @@ class TodayMatchManager {
         }[s]));
     }
 
-    // 라인업 렌더링
     renderLineup(lineups) {
         const players = (list) => {
             return `<div class="players-container">${list.map((n) => `<div class="player">${this.escapeHtml(n)}</div>`).join("")}</div>`;
@@ -607,7 +622,6 @@ class TodayMatchManager {
         `;
     }
 
-    // 채팅 박스 렌더링
     renderChatBox(matchId) {
         return `
             <div class="chat-messages" id="chatMessages"></div>
@@ -621,12 +635,10 @@ class TodayMatchManager {
         `;
     }
 
-    // 채팅 Firestore 경로
     chatCollection(matchId) {
         return window.firebase.collection(this.db, 'match_chats', matchId, 'messages');
     }
 
-    // 패널 탭 설정
     setupPanelTabs(matchId) {
         const tabs = document.querySelectorAll('.tab');
         const contents = document.querySelectorAll('.tab-content');
@@ -651,7 +663,6 @@ class TodayMatchManager {
         }
     }
 
-    // 채팅 기능
     setupChat(matchId) {
         const chatBox = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
@@ -721,7 +732,6 @@ class TodayMatchManager {
         };
     }
 
-    // 투표 저장
     async saveVoteToFirestore(matchId, voteType) {
         const user = this.auth.currentUser;
         if (!user) return;
@@ -750,7 +760,6 @@ class TodayMatchManager {
         return true;
     }
 
-    // 투표 통계 가져오기
     async getVotingStatsFromFirestore(matchId) {
         const stats = { homeWin: 0, draw: 0, awayWin: 0, total: 0 };
         const querySnapshot = await window.firebase.getDocs(
@@ -771,7 +780,6 @@ class TodayMatchManager {
         return stats;
     }
 
-    // 사용자 투표 여부 확인
     async hasUserVoted(matchId) {
         const user = this.auth.currentUser;
         if (!user) return false;
@@ -781,7 +789,6 @@ class TodayMatchManager {
         return voteSnap.exists();
     }
 
-    // 투표 그래프 렌더링
     renderVotingGraph(container, stats) {
         const totalVotes = stats.total;
         
@@ -820,7 +827,6 @@ class TodayMatchManager {
         `;
     }
 
-    // 경기 결과 설정 (관리자용)
     async setMatchResult(matchId, result) {
         const user = this.auth.currentUser;
         if (!user) {
@@ -869,7 +875,6 @@ class TodayMatchManager {
         }
     }
 
-    // 사용자 포인트 업데이트
     async updateUserPoints(uid, pointsToAdd) {
         try {
             console.log(`포인트 업데이트 시작 - UID: ${uid}, 추가 포인트: ${pointsToAdd}`);
@@ -927,6 +932,153 @@ class TodayMatchManager {
         }
     }
 
+    // ── 경기 수정 모달 열기 (관리자 전용) ──────────────────────────────────
+    async openEditMatchModal(matchId) {
+        const modal = document.getElementById('editMatchModal');
+        if (!modal) { console.error('editMatchModal 없음 — index.html에 모달 HTML을 추가했는지 확인하세요.'); return; }
+
+        // 현재 경기 데이터 로드
+        const matchData = await this.getMatchDetailsById(matchId);
+        if (!matchData) { alert('경기 데이터를 불러오지 못했습니다.'); return; }
+
+        // 부제목 (어떤 경기인지 표시)
+        const subtitle = document.getElementById('editMatchSubtitle');
+        if (subtitle) subtitle.textContent = `${matchData.homeTeam || ''} vs ${matchData.awayTeam || ''} · ID: ${matchId}`;
+
+        // 헬퍼
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val !== undefined && val !== null) ? val : ''; };
+
+        // 기본 필드
+        set('editMatchStatus',    matchData.status    || 'scheduled');
+        set('editMatchDate',      matchData.date      || '');
+        set('editMatchTime',      matchData.time      || '');
+        set('editMatchHome',      matchData.homeTeam  || '');
+        set('editMatchAway',      matchData.awayTeam  || '');
+        set('editMatchHomeScore', matchData.homeScore ?? 0);
+        set('editMatchAwayScore', matchData.awayScore ?? 0);
+        set('editMatchLeague',    matchData.league    || '');
+
+        // 라인업
+        const hl = matchData.lineups?.home || {};
+        const al = matchData.lineups?.away || {};
+        set('editHomeThird',  (hl.third  || []).join(', '));
+        set('editHomeSecond', (hl.second || []).join(', '));
+        set('editHomeFirst',  (hl.first  || []).join(', '));
+        set('editAwayThird',  (al.third  || []).join(', '));
+        set('editAwaySecond', (al.second || []).join(', '));
+        set('editAwayFirst',  (al.first  || []).join(', '));
+
+        // 스탯
+        const st = matchData.stats || {};
+        set('editHomePoss',  st.homePossession ?? 50);
+        set('editAwayPoss',  st.awayPossession ?? 50);
+        set('editHomeShots', st.homeShots      ?? 0);
+        set('editAwayShots', st.awayShots      ?? 0);
+
+        // 이벤트
+        const evEl = document.getElementById('editMatchEvents');
+        if (evEl) evEl.value = (matchData.events || []).join('\n');
+
+        // 메시지 초기화
+        const msg = document.getElementById('editMatchMsg');
+        if (msg) { msg.style.display = 'none'; msg.textContent = ''; }
+
+        // 저장 버튼에 현재 matchId 바인딩
+        const saveBtn = document.getElementById('saveEditMatchBtn');
+        if (saveBtn) saveBtn.onclick = () => this.saveMatchEdit(matchId);
+
+        // 닫기/취소
+        const closeFn = () => { modal.style.display = 'none'; };
+        const closeBtn  = document.getElementById('closeEditMatchModal');
+        const cancelBtn = document.getElementById('cancelEditMatchBtn');
+        if (closeBtn)  closeBtn.onclick  = closeFn;
+        if (cancelBtn) cancelBtn.onclick = closeFn;
+
+        // 모달 배경 클릭 닫기 (once: true 로 중복 등록 방지)
+        const bgClose = (e) => { if (e.target === modal) closeFn(); };
+        modal.removeEventListener('click', bgClose);
+        modal.addEventListener('click', bgClose);
+
+        modal.style.display = 'flex';
+    }
+
+    // ── 경기 수정 저장 ──────────────────────────────────────────────────────
+    async saveMatchEdit(matchId) {
+        const modal   = document.getElementById('editMatchModal');
+        const msg     = document.getElementById('editMatchMsg');
+        const saveBtn = document.getElementById('saveEditMatchBtn');
+
+        const showMsg = (text, color) => {
+            if (!msg) return;
+            msg.textContent = text;
+            msg.style.color = color || '#333';
+            msg.style.display = 'block';
+        };
+
+        try {
+            if (saveBtn) saveBtn.disabled = true;
+            showMsg('저장 중...', '#27AE60');
+
+            // 관리자 재확인 (보안)
+            const user = this.auth.currentUser;
+            if (!user) { showMsg('로그인이 필요합니다.', '#e74c3c'); return; }
+            const adminSnap = await window.firebase.getDoc(window.firebase.doc(this.db, 'admins', user.email));
+            if (!adminSnap.exists()) { showMsg('관리자 권한이 없습니다.', '#e74c3c'); return; }
+
+            const get    = (id) => document.getElementById(id)?.value ?? '';
+            const csvArr = (str) => str.split(',').map(s => s.trim()).filter(Boolean);
+
+            const updateData = {
+                status:    get('editMatchStatus'),
+                date:      get('editMatchDate'),
+                time:      get('editMatchTime'),
+                homeTeam:  get('editMatchHome').trim(),
+                awayTeam:  get('editMatchAway').trim(),
+                homeScore: parseInt(get('editMatchHomeScore'), 10) || 0,
+                awayScore: parseInt(get('editMatchAwayScore'), 10) || 0,
+                league:    get('editMatchLeague').trim(),
+                lineups: {
+                    home: {
+                        third:  csvArr(get('editHomeThird')),
+                        second: csvArr(get('editHomeSecond')),
+                        first:  csvArr(get('editHomeFirst')),
+                    },
+                    away: {
+                        third:  csvArr(get('editAwayThird')),
+                        second: csvArr(get('editAwaySecond')),
+                        first:  csvArr(get('editAwayFirst')),
+                    }
+                },
+                stats: {
+                    homePossession: Number(get('editHomePoss'))  || 0,
+                    awayPossession: Number(get('editAwayPoss'))  || 0,
+                    homeShots:      Number(get('editHomeShots')) || 0,
+                    awayShots:      Number(get('editAwayShots')) || 0,
+                },
+                events:    (get('editMatchEvents') || '').split('\n').map(s => s.trim()).filter(Boolean),
+                updatedBy: user.email,
+                updatedAt: new Date(),
+            };
+
+            const matchRef = window.firebase.doc(this.db, 'matches', matchId);
+            await window.firebase.setDoc(matchRef, updateData, { merge: true });
+
+            showMsg('✅ 저장 완료!', '#27AE60');
+
+            // 1.3초 후 모달 닫고 패널 새로고침
+            setTimeout(async () => {
+                if (modal) modal.style.display = 'none';
+                await this.loadMatchDetails(matchId);
+            }, 1300);
+
+        } catch (err) {
+            console.error('경기 수정 저장 실패:', err);
+            showMsg('❌ 저장 실패: ' + err.message, '#e74c3c');
+        } finally {
+            if (saveBtn) saveBtn.disabled = false;
+        }
+    }
+
     // 패널 닫기
     closePanel() {
         const matchDetailsPanel = document.getElementById("matchDetailsPanel");
@@ -942,7 +1094,6 @@ class TodayMatchManager {
         }
     }
 
-    // 이벤트 리스너 설정
     setupEventListeners() {
         const prevBtn = document.getElementById('prevMatch');
         const nextBtn = document.getElementById('nextMatch');
@@ -982,7 +1133,6 @@ class TodayMatchManager {
         }
     }
 
-    // 초기화
     async initialize() {
         console.log("TodayMatchManager 초기화 시작");
         
@@ -996,7 +1146,6 @@ class TodayMatchManager {
         return hasMatches;
     }
 
-    // 실시간 업데이트를 위한 Firestore 리스너 설정
     setupRealtimeUpdates() {
         if (!this.initialized) return;
 
@@ -1025,7 +1174,6 @@ class TodayMatchManager {
 // 전역 인스턴스 생성
 const todayMatchManager = new TodayMatchManager();
 
-// DOM 로드 완료 시 초기화
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM 로드 완료 - TodayMatchManager 초기화");
     
@@ -1039,5 +1187,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 1000);
 });
 
-// 전역 함수로 노출 (디버깅용)
 window.todayMatchManager = todayMatchManager;
