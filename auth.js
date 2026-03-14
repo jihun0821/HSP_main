@@ -18,7 +18,6 @@ let app, db, auth, storage;
 let currentUserProfile = null;
 let isAdmin = false;
 
-// Firebase 초기화 함수
 function initializeFirebase() {
     if (window.firebase && window.firebase.initializeApp) {
         app = window.firebase.initializeApp(firebaseConfig);
@@ -26,12 +25,13 @@ function initializeFirebase() {
         auth = window.firebase.getAuth(app);
         storage = window.firebase.getStorage(app);
         
-        // 전역 변수로 노출
         window.db = db;
         window.auth = auth;
         window.storage = storage;
 
-        window.dispatchEvent(new CustomEvent('firebase-ready'));
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('firebase-ready'));
+        }, 0);
         
         console.log("Firebase 초기화 완료");
         return true;
