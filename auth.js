@@ -1,7 +1,6 @@
-// Firebase 설정 및 인증 관련 기능
-// firebase-auth.js
+// Firebase 설정 및 인증 관련 기능(다른 거랑 충동날 가능성 가장 높은거
 
-// Firebase 설정
+// Firebase 설정(아 몰라 뭐 돈관련 된것도 아니고 털어갈 개인정보도 없는데 그냥 쓰자
 const firebaseConfig = {
     apiKey: "AIzaSyC_YES_I20XByZpXjCN2p1Vp5gueS4Op24",
     authDomain: "hsp-auth-22845.firebaseapp.com",
@@ -52,7 +51,7 @@ function waitForFirebaseInit() {
     });
 }
 
-// ===== 인증 관련 함수들 =====
+// 인증 관련 함수들 모임 
 
 // 로그인 함수
 async function handleLogin() {
@@ -80,7 +79,7 @@ async function handleLogin() {
     }
 }
 
-// 회원가입 1단계 (이메일, 비밀번호 검증)
+// 회원가입 1단계 (이메일 주소 및 비밀번호 검증)
 async function handleSignupNext() {
     const emailInput = document.getElementById('signupEmail');
     const passwordInput = document.getElementById('signupPassword');
@@ -102,10 +101,10 @@ async function handleSignupNext() {
         return;
     }
     
-    // 임시로 데이터 저장
+    // 임시로 저장
     window.tempSignupData = { email, password };
     
-    // 프로필 설정 모달로 이동
+    // 완료시 프로필 설정 모달로 이동
     openProfileModal();
 }
 
@@ -133,7 +132,7 @@ async function handleSignupComplete() {
     }
     
     try {
-        // Firebase Auth 회원가입
+        // Firebase Auth용 회원가입(사이트 회원가입이랑 다름)
         const userCredential = await window.firebase.createUserWithEmailAndPassword(
             auth, 
             window.tempSignupData.email, 
@@ -176,7 +175,7 @@ async function handleSignupComplete() {
     }
 }
 
-// 비밀번호 재설정 이메일 보내기
+// 비밀번호 재설정 이메일로 보내는 코드 
 async function handlePasswordReset() {
     const emailInput = document.getElementById('resetEmail');
     
@@ -303,7 +302,7 @@ async function logout() {
     }
 }
 
-// ===== 사용자 프로필 관리 =====
+// 사용자 프로필 관련 함수들 
 
 // 사용자 프로필 표시
 async function showUserProfile() {
@@ -311,7 +310,7 @@ async function showUserProfile() {
     
     if (user) {
         try {
-            // Firestore에서 프로필 정보 가져오기
+            // Firestore에서 프로필 정보 가져오기(로그인시)
             const profileDocRef = window.firebase.doc(db, 'profiles', user.uid);
             const profileDoc = await window.firebase.getDoc(profileDocRef);
             
@@ -416,7 +415,7 @@ function updateUIForAuthState(isLoggedIn, profileData = null) {
     }
 }
 
-// ===== 인증 상태 감지 =====
+// 상태 변경 감지(오류났을 때 디버깅용으로 개발자 도구에서 확인 가능) 
 
 function setupAuthListener() {
     window.firebase.onAuthStateChanged(auth, async (user) => {
