@@ -213,7 +213,7 @@
     const cards = document.querySelectorAll('.list-card');
     for (const card of cards) {
       const title = card.querySelector('.list-title');
-      if (title && title.textContent.includes('게시판')) return card;
+      if (title && title.textContent.includes('내 기록')) return card;
     }
     return null;
   }
