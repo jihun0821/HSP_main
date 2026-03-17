@@ -298,9 +298,28 @@ async function logout() {
         await window.firebase.signOut(auth);
         console.log('로그아웃 성공');
         currentUserProfile = null;
+
+        // ── 관리자 상태 초기화 ──────────────────────────────────────
+        isAdmin = false;
+        window.isAdmin = false;
+        window.dispatchEvent(new CustomEvent('adminStatusChanged'));
+        // ────────────────────────────────────────────────────────────
+
         updateUIForAuthState(false);
     } catch (error) {
         console.error('로그아웃 실패:', error);
+    }
+}
+
+// ── 관리자 여부 확인 (Firestore admins 컬렉션 기준) ──────────────────────────
+async function checkAdminStatus(user) {
+    try {
+        const adminDocRef = window.firebase.doc(db, 'admins', user.email);
+        const adminDoc = await window.firebase.getDoc(adminDocRef);
+        return adminDoc.exists();
+    } catch (error) {
+        console.error('관리자 권한 확인 실패:', error);
+        return false;
     }
 }
 
@@ -330,6 +349,15 @@ async function showUserProfile() {
             const pointsDocRef = window.firebase.doc(db, 'user_points', user.uid);
             const pointsDoc = await window.firebase.getDoc(pointsDocRef);
             profileData.points = pointsDoc.exists() ? pointsDoc.data().points || 0 : 0;
+
+            // ── 관리자 여부 확인 후 전역 세팅 ──────────────────────────
+            const adminResult = await checkAdminStatus(user);
+            isAdmin = adminResult;
+            window.isAdmin = adminResult;
+            console.log('관리자 여부:', window.isAdmin);
+            // adminStatusChanged 이벤트로 다른 모듈에 알림
+            window.dispatchEvent(new CustomEvent('adminStatusChanged'));
+            // ────────────────────────────────────────────────────────────
             
             currentUserProfile = profileData;
             updateUIForAuthState(true, profileData);
@@ -342,6 +370,12 @@ async function showUserProfile() {
         }
     } else {
         currentUserProfile = null;
+
+        // ── 로그아웃 상태면 관리자 false ───────────────────────────
+        isAdmin = false;
+        window.isAdmin = false;
+        // ────────────────────────────────────────────────────────────
+
         updateUIForAuthState(false);
     }
 }
@@ -427,6 +461,13 @@ function setupAuthListener() {
         } else {
             console.log('사용자 로그아웃됨');
             currentUserProfile = null;
+
+            // ── 로그아웃 시 관리자 상태 초기화 ────────────────────
+            isAdmin = false;
+            window.isAdmin = false;
+            window.dispatchEvent(new CustomEvent('adminStatusChanged'));
+            // ────────────────────────────────────────────────────────
+
             updateUIForAuthState(false);
         }
     });
@@ -444,3 +485,4 @@ window.updateUIForAuthState = updateUIForAuthState;
 window.setupAuthListener = setupAuthListener;
 window.waitForFirebaseInit = waitForFirebaseInit;
 window.currentUserProfile = currentUserProfile;
+window.isAdmin = isAdmin; // 초기값 false로 전역 노출
