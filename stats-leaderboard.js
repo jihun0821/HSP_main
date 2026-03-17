@@ -17,6 +17,9 @@ let statsLeaderboardData = {
     ]
 };
 
+// 전역 참조 초기화 (stats-admin.js 에서 사용)
+window.statsLeaderboardData = statsLeaderboardData;
+
 let currentStatsType = 'goals';
 let statsAutoSwitchInterval;
 let currentStatsIndex = 0;
@@ -32,6 +35,13 @@ const ASSIST_DOC       = 'assist';
 
 // 기본 빈 데이터 (문서가 없을 때 자동 생성용)
 const DEFAULT_PLAYERS = Array.from({ length: 5 }, () => ({ name: '---', value: 0 }));
+
+// ─── 전역 참조 동기화 헬퍼 ──────────────────────────────────────────────────
+// 배열이 교체될 때마다 window.statsLeaderboardData 도 최신 상태로 유지
+
+function syncGlobalStatsData() {
+    window.statsLeaderboardData = statsLeaderboardData;
+}
 
 // ─── Firebase에서 순위 데이터 불러오기 ───────────────────────────────────────
 
@@ -96,6 +106,7 @@ async function loadStatsFromFirebase() {
             });
         }
 
+        syncGlobalStatsData();
         renderStatsLeaderboard();
 
     } catch (error) {
@@ -127,6 +138,7 @@ function subscribeStatsLeaderboard() {
                     value: p.value || 0,
                     unit: '골'
                 }));
+                syncGlobalStatsData(); // ← 전역 참조 동기화
             }
             console.log("득점 순위 실시간 업데이트됨");
             renderStatsLeaderboard();
@@ -146,6 +158,7 @@ function subscribeStatsLeaderboard() {
                     value: p.value || 0,
                     unit: '도움'
                 }));
+                syncGlobalStatsData(); // ← 전역 참조 동기화
             }
             console.log("도움 순위 실시간 업데이트됨");
             renderStatsLeaderboard();
@@ -329,6 +342,7 @@ function escapeHtml(text) {
 function updateStatsData(newGoalsData, newAssistsData) {
     if (newGoalsData && Array.isArray(newGoalsData)) statsLeaderboardData.goals = newGoalsData;
     if (newAssistsData && Array.isArray(newAssistsData)) statsLeaderboardData.assists = newAssistsData;
+    syncGlobalStatsData();
     renderStatsLeaderboard();
 }
 
