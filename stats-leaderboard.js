@@ -23,6 +23,16 @@ let currentStatsIndex = 0;
 const statsTypes = ['goals', 'assists'];
 const totalStatsPages = 2;
 
+// ─── Firebase 경로 상수 ──────────────────────────────────────────────────────
+// 컬렉션: 2026_stats  /  문서: score(득점), assist(도움)
+
+const STATS_COLLECTION = '2026_stats';
+const SCORE_DOC        = 'score';
+const ASSIST_DOC       = 'assist';
+
+// 기본 빈 데이터 (문서가 없을 때 자동 생성용)
+const DEFAULT_PLAYERS = Array.from({ length: 5 }, () => ({ name: '---', value: 0 }));
+
 // ─── Firebase에서 순위 데이터 불러오기 ───────────────────────────────────────
 
 async function loadStatsFromFirebase() {
@@ -34,33 +44,56 @@ async function loadStatsFromFirebase() {
             return;
         }
 
-        const docRef = window.firebase.doc(db, 'stats_leaderboard', 'current');
-        const docSnap = await window.firebase.getDoc(docRef);
+        const scoreRef  = window.firebase.doc(db, STATS_COLLECTION, SCORE_DOC);
+        const assistRef = window.firebase.doc(db, STATS_COLLECTION, ASSIST_DOC);
 
-        if (docSnap.exists()) {
-            const data = docSnap.data();
+        const [scoreSnap, assistSnap] = await Promise.all([
+            window.firebase.getDoc(scoreRef),
+            window.firebase.getDoc(assistRef)
+        ]);
 
-            if (data.goals && Array.isArray(data.goals)) {
-                statsLeaderboardData.goals = data.goals.map((p, i) => ({
+        // ── 득점(score) 문서 처리 ──
+        if (scoreSnap.exists()) {
+            const data = scoreSnap.data();
+            if (data.players && Array.isArray(data.players)) {
+                statsLeaderboardData.goals = data.players.map((p, i) => ({
                     rank: i + 1,
                     name: p.name || '---',
                     value: p.value || 0,
                     unit: '골'
                 }));
             }
+            console.log("득점 순위 불러오기 완료");
+        } else {
+            // 문서가 없으면 2026_stats/score 자동 생성
+            console.log("2026_stats/score 문서가 없습니다. 기본값으로 자동 생성합니다.");
+            await window.firebase.setDoc(scoreRef, {
+                players: DEFAULT_PLAYERS,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+        }
 
-            if (data.assists && Array.isArray(data.assists)) {
-                statsLeaderboardData.assists = data.assists.map((p, i) => ({
+        // ── 도움(assist) 문서 처리 ──
+        if (assistSnap.exists()) {
+            const data = assistSnap.data();
+            if (data.players && Array.isArray(data.players)) {
+                statsLeaderboardData.assists = data.players.map((p, i) => ({
                     rank: i + 1,
                     name: p.name || '---',
                     value: p.value || 0,
                     unit: '도움'
                 }));
             }
-
-            console.log("Firebase에서 득점/도움 순위 불러오기 완료");
+            console.log("도움 순위 불러오기 완료");
         } else {
-            console.log("stats_leaderboard/current 문서가 없습니다. 기본값을 사용합니다.");
+            // 문서가 없으면 2026_stats/assist 자동 생성
+            console.log("2026_stats/assist 문서가 없습니다. 기본값으로 자동 생성합니다.");
+            await window.firebase.setDoc(assistRef, {
+                players: DEFAULT_PLAYERS,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
         }
 
         renderStatsLeaderboard();
@@ -72,6 +105,7 @@ async function loadStatsFromFirebase() {
 }
 
 // Firebase 실시간 구독 (데이터 변경 시 자동 반영)
+// score, assist 문서를 각각 별도로 구독해서 하나만 바뀌어도 즉시 반영
 function subscribeStatsLeaderboard() {
     const db = window.db;
     if (!db) {
@@ -79,35 +113,45 @@ function subscribeStatsLeaderboard() {
         return;
     }
 
-    const docRef = window.firebase.doc(db, 'stats_leaderboard', 'current');
+    const scoreRef  = window.firebase.doc(db, STATS_COLLECTION, SCORE_DOC);
+    const assistRef = window.firebase.doc(db, STATS_COLLECTION, ASSIST_DOC);
 
-    window.firebase.onSnapshot(docRef, (docSnap) => {
+    // 득점 구독
+    window.firebase.onSnapshot(scoreRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-
-            if (data.goals && Array.isArray(data.goals)) {
-                statsLeaderboardData.goals = data.goals.map((p, i) => ({
+            if (data.players && Array.isArray(data.players)) {
+                statsLeaderboardData.goals = data.players.map((p, i) => ({
                     rank: i + 1,
                     name: p.name || '---',
                     value: p.value || 0,
                     unit: '골'
                 }));
             }
+            console.log("득점 순위 실시간 업데이트됨");
+            renderStatsLeaderboard();
+        }
+    }, (error) => {
+        console.error("득점 순위 실시간 구독 오류:", error);
+    });
 
-            if (data.assists && Array.isArray(data.assists)) {
-                statsLeaderboardData.assists = data.assists.map((p, i) => ({
+    // 도움 구독
+    window.firebase.onSnapshot(assistRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.players && Array.isArray(data.players)) {
+                statsLeaderboardData.assists = data.players.map((p, i) => ({
                     rank: i + 1,
                     name: p.name || '---',
                     value: p.value || 0,
                     unit: '도움'
                 }));
             }
-
-            console.log("순위 데이터 실시간 업데이트됨");
+            console.log("도움 순위 실시간 업데이트됨");
             renderStatsLeaderboard();
         }
     }, (error) => {
-        console.error("실시간 구독 오류:", error);
+        console.error("도움 순위 실시간 구독 오류:", error);
     });
 }
 
