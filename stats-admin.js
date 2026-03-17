@@ -19,27 +19,29 @@ function closeStatsEditModal() {
 }
 
 // ─── 폼 채우기 ───────────────────────────────────────────────────────────────
+// window.statsLeaderboardData 는 stats-leaderboard.js 에서 항상 최신 상태로 동기화됨
 
 function populateStatsEditForm() {
-    const goalsData = window.statsLeaderboardData?.goals || [];
-    const assistsData = window.statsLeaderboardData?.assists || [];
+    // window.statsLeaderboardData 가 없으면 빈 배열로 폴백
+    const goalsData   = (window.statsLeaderboardData && window.statsLeaderboardData.goals)   || [];
+    const assistsData = (window.statsLeaderboardData && window.statsLeaderboardData.assists) || [];
 
     // 득점 순위 5개 채우기
     for (let i = 1; i <= 5; i++) {
-        const player = goalsData[i - 1] || { name: '', value: 0 };
-        const nameInput = document.getElementById(`goalName${i}`);
+        const player     = goalsData[i - 1] || { name: '', value: 0 };
+        const nameInput  = document.getElementById(`goalName${i}`);
         const valueInput = document.getElementById(`goalValue${i}`);
-        if (nameInput) nameInput.value = player.name === '---' ? '' : player.name;
-        if (valueInput) valueInput.value = player.value || 0;
+        if (nameInput)  nameInput.value  = (player.name === '---' || !player.name) ? '' : player.name;
+        if (valueInput) valueInput.value = player.value ?? 0;
     }
 
     // 도움 순위 5개 채우기
     for (let i = 1; i <= 5; i++) {
-        const player = assistsData[i - 1] || { name: '', value: 0 };
-        const nameInput = document.getElementById(`assistName${i}`);
+        const player     = assistsData[i - 1] || { name: '', value: 0 };
+        const nameInput  = document.getElementById(`assistName${i}`);
         const valueInput = document.getElementById(`assistValue${i}`);
-        if (nameInput) nameInput.value = player.name === '---' ? '' : player.name;
-        if (valueInput) valueInput.value = player.value || 0;
+        if (nameInput)  nameInput.value  = (player.name === '---' || !player.name) ? '' : player.name;
+        if (valueInput) valueInput.value = player.value ?? 0;
     }
 }
 
@@ -128,20 +130,20 @@ function clearStatsEditMsg() {
 // ─── 탭 전환 ─────────────────────────────────────────────────────────────────
 
 function switchStatsEditTab(tab) {
-    const goalsSection = document.getElementById('statsEditGoals');
+    const goalsSection   = document.getElementById('statsEditGoals');
     const assistsSection = document.getElementById('statsEditAssists');
-    const goalTab = document.getElementById('tabGoals');
-    const assistTab = document.getElementById('tabAssists');
+    const goalTab        = document.getElementById('tabGoals');
+    const assistTab      = document.getElementById('tabAssists');
 
     if (tab === 'goals') {
-        if (goalsSection) goalsSection.style.display = 'block';
+        if (goalsSection)   goalsSection.style.display   = 'block';
         if (assistsSection) assistsSection.style.display = 'none';
-        if (goalTab) goalTab.classList.add('active-tab');
+        if (goalTab)   goalTab.classList.add('active-tab');
         if (assistTab) assistTab.classList.remove('active-tab');
     } else {
-        if (goalsSection) goalsSection.style.display = 'none';
+        if (goalsSection)   goalsSection.style.display   = 'none';
         if (assistsSection) assistsSection.style.display = 'block';
-        if (goalTab) goalTab.classList.remove('active-tab');
+        if (goalTab)   goalTab.classList.remove('active-tab');
         if (assistTab) assistTab.classList.add('active-tab');
     }
 }
@@ -162,9 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cancelBtn) cancelBtn.addEventListener('click', closeStatsEditModal);
 
     // 탭 버튼
-    const tabGoals = document.getElementById('tabGoals');
+    const tabGoals   = document.getElementById('tabGoals');
     const tabAssists = document.getElementById('tabAssists');
-    if (tabGoals) tabGoals.addEventListener('click', () => switchStatsEditTab('goals'));
+    if (tabGoals)   tabGoals.addEventListener('click',   () => switchStatsEditTab('goals'));
     if (tabAssists) tabAssists.addEventListener('click', () => switchStatsEditTab('assists'));
 
     // 모달 배경 클릭 시 닫기
@@ -190,7 +192,7 @@ window.addEventListener('adminStatusChanged', () => {
 
 // ─── 전역 노출 ───────────────────────────────────────────────────────────────
 
-window.openStatsEditModal = openStatsEditModal;
-window.closeStatsEditModal = closeStatsEditModal;
-window.saveStatsToFirebase = saveStatsToFirebase;
-window.switchStatsEditTab = switchStatsEditTab;
+window.openStatsEditModal   = openStatsEditModal;
+window.closeStatsEditModal  = closeStatsEditModal;
+window.saveStatsToFirebase  = saveStatsToFirebase;
+window.switchStatsEditTab   = switchStatsEditTab;
