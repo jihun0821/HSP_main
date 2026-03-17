@@ -657,6 +657,121 @@
         </div>
     </div>
 
+    <!-- ① 관리자용: 득점/도움 순위 편집 모달 -->
+<div id="statsEditModal" class="auth-modal" style="display:none; align-items:center; justify-content:center;">
+  <div class="auth-modal-content" style="max-width:520px; width:100%; box-sizing:border-box; padding:28px; max-height:85vh; overflow-y:auto; border-radius:12px;">
+    
+    <span class="auth-modal-close" id="closeStatsEditModal">&times;</span>
+    <h2 style="margin-bottom:6px;">득점 / 도움 순위 편집</h2>
+    <p style="color:#888; font-size:13px; margin-bottom:20px;">값을 기준으로 자동 정렬됩니다. 빈 칸은 '---'로 저장됩니다.</p>
+ 
+    <!-- 탭 -->
+    <div style="display:flex; gap:8px; margin-bottom:20px;">
+      <button id="tabGoals" onclick="switchStatsEditTab('goals')" style="
+        flex:1; padding:9px 0; border:none; border-radius:8px; font-size:14px; font-weight:600;
+        background:#27AE60; color:#fff; cursor:pointer; transition:opacity 0.2s;
+      " class="active-tab">⚽ 득점 순위</button>
+      <button id="tabAssists" onclick="switchStatsEditTab('assists')" style="
+        flex:1; padding:9px 0; border:none; border-radius:8px; font-size:14px; font-weight:600;
+        background:#eee; color:#555; cursor:pointer; transition:opacity 0.2s;
+      ">🅰️ 도움 순위</button>
+    </div>
+ 
+    <!-- 득점 순위 입력 -->
+    <div id="statsEditGoals">
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; color:#aaa;">#</span>
+        <span style="font-size:12px; color:#aaa;">선수 이름</span>
+        <span style="font-size:12px; color:#aaa; text-align:center;">골</span>
+      </div>
+      <!-- 1위 ~ 5위 -->
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">⚽</span>
+        <input id="goalName1" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="goalValue1" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">🥈</span>
+        <input id="goalName2" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="goalValue2" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">🥉</span>
+        <input id="goalName3" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="goalValue3" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; color:#888; text-align:center;">4</span>
+        <input id="goalName4" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="goalValue4" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; color:#888; text-align:center;">5</span>
+        <input id="goalName5" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="goalValue5" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+    </div>
+ 
+    <!-- 도움 순위 입력 (기본 숨김) -->
+    <div id="statsEditAssists" style="display:none;">
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:12px; color:#aaa;">#</span>
+        <span style="font-size:12px; color:#aaa;">선수 이름</span>
+        <span style="font-size:12px; color:#aaa; text-align:center;">도움</span>
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">🅰️</span>
+        <input id="assistName1" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="assistValue1" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">🥈</span>
+        <input id="assistName2" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="assistValue2" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:15px;">🥉</span>
+        <input id="assistName3" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="assistValue3" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; color:#888; text-align:center;">4</span>
+        <input id="assistName4" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="assistValue4" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+      <div style="display:grid; grid-template-columns:24px 1fr 80px; gap:8px; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; color:#888; text-align:center;">5</span>
+        <input id="assistName5" type="text" placeholder="선수 이름" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box;" />
+        <input id="assistValue5" type="number" min="0" value="0" style="padding:8px 10px; border:1px solid #ddd; border-radius:6px; font-size:14px; width:100%; box-sizing:border-box; text-align:center;" />
+      </div>
+    </div>
+ 
+    <!-- 메시지 -->
+    <div id="statsEditMsg" style="display:none; font-size:13px; text-align:center; padding:6px 0; font-weight:600;"></div>
+ 
+    <!-- 버튼 -->
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+      <button id="saveStatsBtn" style="
+        padding:10px 28px; background:#27AE60; color:#fff;
+        border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;
+      ">저장</button>
+      <button id="cancelStatsBtn" style="
+        padding:10px 28px; background:#f0f0f0; color:#555;
+        border:none; border-radius:8px; font-size:14px; cursor:pointer;
+      ">취소</button>
+    </div>
+ 
+  </div>
+</div>
+ 
+<!-- 탭 전환 시 스타일 변경용 인라인 스크립트 -->
+<style>
+  #tabGoals.active-tab  { background: #27AE60 !important; color: #fff !important; }
+  #tabGoals:not(.active-tab) { background: #eee !important; color: #555 !important; }
+  #tabAssists.active-tab { background: #27AE60 !important; color: #fff !important; }
+  #tabAssists:not(.active-tab) { background: #eee !important; color: #555 !important; }
+</style>
+
     <script src="auth.js"></script>
     <script src="modal-ui.js"></script>
     <script src="matches.js"></script>
@@ -667,6 +782,7 @@
     <script src="room-setting.js"></script>
     <script src="personal-stats.js"></script>
     <script src="group-standings.js"></script>
+    <script src="stats-admin.js"></script>
     
 </body>
 </html>
